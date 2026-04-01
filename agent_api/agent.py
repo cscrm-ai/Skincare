@@ -232,8 +232,25 @@ def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport
                     markdown=True,
                 )
                 response = agent.run(prompt, images=[Image(filepath=img_path)])
+                result = response.content
+
+                # Valida que o retorno é o objeto estruturado, não uma string
+                if isinstance(result, str):
+                    print(f"[GEMINI] {model_id} retornou string em vez de objeto, tentando parse...")
+                    try:
+                        import json as _json
+                        data = _json.loads(result)
+                        result = SkinAnalysisReport(**data)
+                    except Exception:
+                        print(f"[GEMINI] Falha ao parsear string, tentando próximo modelo...")
+                        continue
+
+                if not hasattr(result, 'findings'):
+                    print(f"[GEMINI] Resultado sem 'findings', tentando próximo...")
+                    continue
+
                 print(f"[GEMINI] Sucesso com {model_id}")
-                return response.content
+                return result
 
             except Exception as e:
                 last_error = e
