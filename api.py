@@ -137,6 +137,15 @@ def _uv_recommendation(uv: float) -> str:
     return "Extremo. Evite o sol. FPS 50+ obrigatório."
 
 
+@app.post("/api/clear-cache")
+async def clear_cache():
+    count = 0
+    for f in CACHE_DIR.glob("*.json"):
+        f.unlink(missing_ok=True)
+        count += 1
+    return {"cleared": count}
+
+
 @app.get("/health")
 async def health():
     gk = os.environ.get("GOOGLE_API_KEY", "")
