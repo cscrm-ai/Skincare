@@ -2,9 +2,11 @@
 
 Analisa fotografias de pele e gera laudos dermatologicos estruturados
 usando Gemini (analise visual) + Moondream3 via FAL AI (coordenadas).
+Multi-provider: rotaciona entre API keys e modelos para evitar quota.
 """
 
 import json
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -24,7 +26,59 @@ from tools.models import SkinAnalysisReport
 
 import fal_client
 
-from tools.retry import retry_with_backoff
+
+# ═══════════════════════════════════════
+# MULTI-PROVIDER: rotacao de keys e modelos
+# ═══════════════════════════════════════
+
+def _load_keys(prefix: str) -> list[str]:
+    """Carrega todas as keys de um prefix (ex: GOOGLE_API_KEY, GOOGLE_API_KEY_2, ...)."""
+    keys = []
+    # Key principal
+    main = os.environ.get(prefix)
+    if main:
+        keys.append(main)
+    # Keys adicionais: PREFIX_2, PREFIX_3, ...
+    for i in range(2, 20):
+        k = os.environ.get(f"{prefix}_{i}")
+        if k:
+            keys.append(k)
+    return keys
+
+
+GOOGLE_KEYS = _load_keys("GOOGLE_API_KEY")
+FAL_KEYS = _load_keys("FAL_KEY")
+
+# Modelos Gemini em ordem de preferencia (mais barato → mais caro)
+GEMINI_MODELS = [
+    "gemini-2.0-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+]
+
+# Indice rotativo para distribuir carga entre keys
+_google_key_idx = 0
+_fal_key_idx = 0
+
+
+def _next_google_key() -> str:
+    """Retorna a proxima Google API key em round-robin."""
+    global _google_key_idx
+    if not GOOGLE_KEYS:
+        return os.environ.get("GOOGLE_API_KEY", "")
+    key = GOOGLE_KEYS[_google_key_idx % len(GOOGLE_KEYS)]
+    _google_key_idx += 1
+    return key
+
+
+def _next_fal_key() -> str:
+    """Retorna a proxima FAL key em round-robin."""
+    global _fal_key_idx
+    if not FAL_KEYS:
+        return os.environ.get("FAL_KEY", "")
+    key = FAL_KEYS[_fal_key_idx % len(FAL_KEYS)]
+    _fal_key_idx += 1
+    return key
 
 SYSTEM_PROMPT = """# Skin Care Specialist Dermatologist
 
@@ -105,24 +159,44 @@ Suggest personalized AM and PM routines based on findings.
 - Remember: ALL output text in pt-BR, ONLY queries in English"""
 
 
-@retry_with_backoff(max_retries=3, base_delay=1.0, quota_delay=30.0)
 def _get_moondream_points(query: str, image_url: str) -> dict:
-    """Chama Moondream3 via FAL AI para obter coordenadas X,Y."""
+    """Chama Moondream3 via FAL AI com rotacao de keys."""
     print(f"[MOONDREAM3] Query: '{query}'")
 
-    result = fal_client.subscribe(
-        "fal-ai/moondream3-preview/point",
-        arguments={"image_url": image_url, "prompt": query},
-    )
+    attempts = max(len(FAL_KEYS), 1)
+    last_error = None
 
-    points = result.get("points", [])
-    if points:
-        pt = points[0]
-        print(f"[MOONDREAM3] Ponto: x={pt['x']:.4f}, y={pt['y']:.4f}")
-        return {"x": pt["x"], "y": pt["y"]}
+    for attempt in range(attempts):
+        try:
+            # Rotaciona FAL key
+            key = _next_fal_key()
+            os.environ["FAL_KEY"] = key
+            print(f"[FAL] Usando key ...{key[-6:]}")
 
-    print("[MOONDREAM3] Nenhum ponto detectado")
-    return {"x": 0, "y": 0}
+            result = fal_client.subscribe(
+                "fal-ai/moondream3-preview/point",
+                arguments={"image_url": image_url, "prompt": query},
+            )
+
+            points = result.get("points", [])
+            if points:
+                pt = points[0]
+                print(f"[MOONDREAM3] Ponto: x={pt['x']:.4f}, y={pt['y']:.4f}")
+                return {"x": pt["x"], "y": pt["y"]}
+
+            print("[MOONDREAM3] Nenhum ponto detectado")
+            return {"x": 0, "y": 0}
+
+        except Exception as e:
+            last_error = e
+            err_msg = str(e).lower()
+            if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
+                print(f"[FAL] Key ...{key[-6:]} atingiu quota, tentando proxima...")
+                continue
+            raise
+
+    print(f"[FAL] Todas as {attempts} keys falharam")
+    raise last_error
 
 
 def _resolve_finding_coords(finding, index: int, image_url: str) -> None:
@@ -139,31 +213,51 @@ def _resolve_finding_coords(finding, index: int, image_url: str) -> None:
     finding.y_point = coords["y"]
 
 
-@retry_with_backoff(max_retries=2, base_delay=2.0, quota_delay=30.0)
-def _call_gemini(agent, prompt, img_path):
-    """Chama Gemini com retry automatico."""
-    return agent.run(prompt, images=[Image(filepath=img_path)])
+def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport:
+    """Chama Gemini com rotacao de keys e modelos fallback."""
+    last_error = None
+
+    for model_id in GEMINI_MODELS:
+        for _key_attempt in range(max(len(GOOGLE_KEYS), 1)):
+            try:
+                key = _next_google_key()
+                os.environ["GOOGLE_API_KEY"] = key
+                print(f"[GEMINI] Tentando modelo={model_id}, key=...{key[-6:]}")
+
+                agent = Agent(
+                    name="skincare_analyst",
+                    model=Gemini(id=model_id),
+                    output_schema=SkinAnalysisReport,
+                    instructions=SYSTEM_PROMPT,
+                    markdown=True,
+                )
+                response = agent.run(prompt, images=[Image(filepath=img_path)])
+                print(f"[GEMINI] Sucesso com {model_id}")
+                return response.content
+
+            except Exception as e:
+                last_error = e
+                err_msg = str(e).lower()
+                if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
+                    print(f"[GEMINI] Key ...{key[-6:]} quota excedida, tentando proxima...")
+                    continue
+                # Erro nao relacionado a quota — tenta proximo modelo
+                print(f"[GEMINI] Erro com {model_id}: {e}, tentando proximo modelo...")
+                break
+
+    raise last_error or Exception("Todos os modelos e keys Gemini falharam")
 
 
 def analyze_image(img_path: str) -> SkinAnalysisReport:
     """Analisa uma imagem de pele e retorna o laudo estruturado."""
-
-    # Passo 1: Gemini analisa a imagem e gera o laudo (sem coordenadas)
-    agent = Agent(
-        name="skincare_analyst",
-        model=Gemini(id="gemini-3.1-flash-lite-preview"),
-        output_schema=SkinAnalysisReport,
-        instructions=SYSTEM_PROMPT,
-        markdown=True,
-    )
 
     user_prompt = """Analyze the skin image with MAXIMUM DETAIL and generate the full dermatological report.
 Remember: set x_point=0 and y_point=0 for all findings.
 Write the "query" field in SIMPLE ENGLISH for the detection model.
 Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portuguese."""
 
-    response = _call_gemini(agent, user_prompt, img_path)
-    report = response.content
+    # Passo 1: Gemini analisa com fallback de modelos e keys
+    report = _call_gemini_with_fallback(user_prompt, img_path)
 
     print(f"\n[AGENTE] Gerou {len(report.findings)} achados. Buscando coordenadas via Moondream3...\n")
 
