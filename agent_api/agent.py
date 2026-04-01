@@ -54,6 +54,7 @@ GEMINI_MODELS = [
     "gemini-2.0-flash-lite",
     "gemini-2.0-flash",
     "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
 ]
 
 # Indice rotativo para distribuir carga entre keys
@@ -256,7 +257,9 @@ def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport
                 last_error = e
                 err_msg = str(e).lower()
                 if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
-                    print(f"[GEMINI] Key ...{key[-6:]} quota excedida, tentando próxima...")
+                    import time
+                    print(f"[GEMINI] Key ...{key[-6:]} quota excedida, aguardando 3s...")
+                    time.sleep(3)
                     continue
                 # Erro nao relacionado a quota — tenta proximo modelo
                 print(f"[GEMINI] Erro com {model_id}: {e}, tentando próximo modelo...")
