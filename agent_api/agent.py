@@ -1,8 +1,7 @@
-"""Agente de analise de SkinCare.
+"""Agente de análise de SkinCare.
 
 Analisa fotografias de pele e gera laudos dermatológicos estruturados
 usando Gemini (análise visual) + Moondream3 via FAL AI (coordenadas).
-Multi-provider: rotaciona entre API keys e modelos para evitar quota.
 """
 
 import json
@@ -26,60 +25,8 @@ from tools.models import SkinAnalysisReport
 
 import fal_client
 
-
-# ═══════════════════════════════════════
-# MULTI-PROVIDER: rotação de keys e modelos
-# ═══════════════════════════════════════
-
-def _load_keys(prefix: str) -> list[str]:
-    """Carrega todas as keys de um prefix (ex: GOOGLE_API_KEY, GOOGLE_API_KEY_2, ...)."""
-    keys = []
-    # Key principal
-    main = os.environ.get(prefix)
-    if main:
-        keys.append(main)
-    # Keys adicionais: PREFIX_2, PREFIX_3, ...
-    for i in range(2, 20):
-        k = os.environ.get(f"{prefix}_{i}")
-        if k:
-            keys.append(k)
-    return keys
-
-
-GOOGLE_KEYS = _load_keys("GOOGLE_API_KEY")
-FAL_KEYS = _load_keys("FAL_KEY")
-
-# Modelos Gemini em ordem de preferencia (mais barato → mais caro)
-GEMINI_MODELS = [
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash",
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
-]
-
-# Indice rotativo para distribuir carga entre keys
-_google_key_idx = 0
-_fal_key_idx = 0
-
-
-def _next_google_key() -> str:
-    """Retorna a próxima Google API key em round-robin."""
-    global _google_key_idx
-    if not GOOGLE_KEYS:
-        return os.environ.get("GOOGLE_API_KEY", "")
-    key = GOOGLE_KEYS[_google_key_idx % len(GOOGLE_KEYS)]
-    _google_key_idx += 1
-    return key
-
-
-def _next_fal_key() -> str:
-    """Retorna a próxima FAL key em round-robin."""
-    global _fal_key_idx
-    if not FAL_KEYS:
-        return os.environ.get("FAL_KEY", "")
-    key = FAL_KEYS[_fal_key_idx % len(FAL_KEYS)]
-    _fal_key_idx += 1
-    return key
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+GEMINI_MODEL = "gemini-2.5-flash-lite"
 
 SYSTEM_PROMPT = """# Skin Care Specialist Dermatologist
 
@@ -118,7 +65,7 @@ GOOD query examples:
 
 BAD query examples (DO NOT USE):
 - "lesao papular" (too technical, model won't understand)
-- "hiperpigmentacao periorbital" (medical jargon)
+- "hiperpigmentação periorbital" (medical jargon)
 - "dark area under both eyes" (too vague, specify left or right)
 - "pimple on forehead" (too vague, specify left/right/center and upper/lower)
 - "wrinkle on face" (which wrinkle? where exactly?)
@@ -161,113 +108,36 @@ Suggest personalized AM and PM routines based on findings.
 
 
 def _get_moondream_points(query: str, image_url: str) -> dict:
-    """Chama Moondream3 via FAL AI com rotação de keys."""
+    """Chama Moondream3 via FAL AI para obter coordenadas X,Y."""
     print(f"[MOONDREAM3] Query: '{query}'")
 
-    attempts = max(len(FAL_KEYS), 1)
-    last_error = None
+    result = fal_client.subscribe(
+        "fal-ai/moondream3-preview/point",
+        arguments={"image_url": image_url, "prompt": query},
+    )
 
-    for attempt in range(attempts):
-        try:
-            # Rotaciona FAL key
-            key = _next_fal_key()
-            os.environ["FAL_KEY"] = key
-            print(f"[FAL] Usando key ...{key[-6:]}")
+    points = result.get("points", [])
+    if points:
+        pt = points[0]
+        print(f"[MOONDREAM3] Ponto: x={pt['x']:.4f}, y={pt['y']:.4f}")
+        return {"x": pt["x"], "y": pt["y"]}
 
-            result = fal_client.subscribe(
-                "fal-ai/moondream3-preview/point",
-                arguments={"image_url": image_url, "prompt": query},
-            )
-
-            points = result.get("points", [])
-            if points:
-                pt = points[0]
-                print(f"[MOONDREAM3] Ponto: x={pt['x']:.4f}, y={pt['y']:.4f}")
-                return {"x": pt["x"], "y": pt["y"]}
-
-            print("[MOONDREAM3] Nenhum ponto detectado")
-            return {"x": 0, "y": 0}
-
-        except Exception as e:
-            last_error = e
-            err_msg = str(e).lower()
-            if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
-                print(f"[FAL] Key ...{key[-6:]} atingiu quota, tentando próxima...")
-                continue
-            raise
-
-    print(f"[FAL] Todas as {attempts} keys falharam")
-    raise last_error
+    print("[MOONDREAM3] Nenhum ponto detectado")
+    return {"x": 0, "y": 0}
 
 
 def _resolve_finding_coords(finding, index: int, image_url: str) -> None:
-    """Resolve coordenadas para um unico achado, com retry simplificado."""
+    """Resolve coordenadas para um único achado, com retry simplificado."""
     print(f"[ACHADO {index + 1}] {finding.zone}: {finding.description}")
     coords = _get_moondream_points(finding.query, image_url)
 
     if coords["x"] == 0 and coords["y"] == 0:
-        simple_query = finding.zone.lower().replace("regiao ", "").replace("zona ", "")
+        simple_query = finding.zone.lower().replace("região ", "").replace("zona ", "")
         print(f"[RETRY] Tentando query simples: '{simple_query}'")
         coords = _get_moondream_points(simple_query, image_url)
 
     finding.x_point = coords["x"]
     finding.y_point = coords["y"]
-
-
-def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport:
-    """Chama Gemini com rotação de keys e modelos fallback."""
-    last_error = None
-    total_attempts = len(GEMINI_MODELS) * max(len(GOOGLE_KEYS), 1)
-    print(f"[GEMINI] {len(GOOGLE_KEYS)} keys x {len(GEMINI_MODELS)} modelos = {total_attempts} tentativas possíveis")
-
-    for model_id in GEMINI_MODELS:
-        for _key_attempt in range(max(len(GOOGLE_KEYS), 1)):
-            try:
-                key = _next_google_key()
-                os.environ["GOOGLE_API_KEY"] = key
-                print(f"[GEMINI] Tentando modelo={model_id}, key=...{key[-6:]}")
-
-                agent = Agent(
-                    name="skincare_analyst",
-                    model=Gemini(id=model_id, api_key=key),
-                    output_schema=SkinAnalysisReport,
-                    instructions=SYSTEM_PROMPT,
-                    markdown=True,
-                )
-                response = agent.run(prompt, images=[Image(filepath=img_path)])
-                result = response.content
-
-                # Valida que o retorno é o objeto estruturado, não uma string
-                if isinstance(result, str):
-                    print(f"[GEMINI] {model_id} retornou string em vez de objeto, tentando parse...")
-                    try:
-                        import json as _json
-                        data = _json.loads(result)
-                        result = SkinAnalysisReport(**data)
-                    except Exception:
-                        print(f"[GEMINI] Falha ao parsear string, tentando próximo modelo...")
-                        continue
-
-                if not hasattr(result, 'findings'):
-                    print(f"[GEMINI] Resultado sem 'findings', tentando próximo...")
-                    continue
-
-                print(f"[GEMINI] Sucesso com {model_id}")
-                return result
-
-            except Exception as e:
-                last_error = e
-                err_msg = str(e).lower()
-                if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
-                    import time
-                    print(f"[GEMINI] Key ...{key[-6:]} quota excedida, aguardando 3s...")
-                    time.sleep(3)
-                    continue
-                # Erro nao relacionado a quota — tenta proximo modelo
-                print(f"[GEMINI] Erro com {model_id}: {e}, tentando próximo modelo...")
-                break
-
-    raise last_error or Exception("Todos os modelos e keys Gemini falharam")
 
 
 def analyze_image(img_path: str) -> SkinAnalysisReport:
@@ -278,12 +148,29 @@ Remember: set x_point=0 and y_point=0 for all findings.
 Write the "query" field in SIMPLE ENGLISH for the detection model.
 Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portuguese."""
 
-    # Passo 1: Gemini analisa com fallback de modelos e keys
-    report = _call_gemini_with_fallback(user_prompt, img_path)
+    # Passo 1: Gemini analisa a imagem
+    print(f"[GEMINI] Usando modelo={GEMINI_MODEL}, key=...{GOOGLE_API_KEY[-6:]}")
+
+    agent = Agent(
+        name="skincare_analyst",
+        model=Gemini(id=GEMINI_MODEL, api_key=GOOGLE_API_KEY),
+        output_schema=SkinAnalysisReport,
+        instructions=SYSTEM_PROMPT,
+        markdown=True,
+    )
+
+    response = agent.run(user_prompt, images=[Image(filepath=img_path)])
+    report = response.content
+
+    # Valida que o retorno é o objeto estruturado
+    if isinstance(report, str):
+        print("[GEMINI] Retornou string, tentando parse...")
+        data = json.loads(report)
+        report = SkinAnalysisReport(**data)
 
     print(f"\n[AGENTE] Gerou {len(report.findings)} achados. Buscando coordenadas via Moondream3...\n")
 
-    # Pre-computa image_url uma unica vez (evita re-ler o arquivo N vezes)
+    # Pré-computa image_url uma única vez
     if img_path.startswith(("http://", "https://")):
         image_url = img_path
     else:
@@ -298,10 +185,10 @@ Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portugues
         for future in futures:
             future.result()  # Propaga exceções se houver
 
-    # Passo 3: Afastar coordenadas muito proximas para evitar sobreposicao
+    # Passo 3: Afastar coordenadas muito próximas para evitar sobreposição
     _spread_nearby_points(report.findings)
 
-    print(f"[CONCLUIDO] Todas as coordenadas preenchidas via Moondream3\n")
+    print(f"[CONCLUÍDO] Todas as coordenadas preenchidas via Moondream3\n")
     return report
 
 
@@ -322,11 +209,9 @@ def _spread_nearby_points(findings: list, min_dist: float = 0.04) -> None:
             dist = math.sqrt(dx * dx + dy * dy)
 
             if dist < min_dist and dist > 0:
-                # Calcula direção e afasta o segundo ponto
                 scale = min_dist / dist
                 fj.x_point = fi.x_point + dx * scale
                 fj.y_point = fi.y_point + dy * scale
-                # Clamp entre 0 e 1
                 fj.x_point = max(0.01, min(0.99, fj.x_point))
                 fj.y_point = max(0.01, min(0.99, fj.y_point))
                 print(f"[SPREAD] Achados {i+1} e {j+1} estavam muito próximos, ajustado")
