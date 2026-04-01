@@ -846,12 +846,36 @@ function renderResults(d){
   const ic=document.getElementById('result-image-container'),img=document.getElementById('result-img');
   img.src=d.image_url;
   ic.querySelectorAll('.point-marker').forEach(p=>p.remove());
-  img.onload=()=>{(d.findings||[]).forEach((f,i)=>{
-    if(!f.x_point&&!f.y_point)return;
-    const m=document.createElement('div');m.className='point-marker';m.style.left=(f.x_point*100)+'%';m.style.top=(f.y_point*100)+'%';
-    m.innerHTML=(i+1)+`<div class="point-tooltip"><div style="font-size:.7rem;font-family:'Space Mono',monospace;color:rgba(130,120,112,.7);text-transform:uppercase;margin-bottom:.2rem">${f.zone}</div><div style="font-size:.8rem;font-weight:500;margin-bottom:.3rem">${f.description}</div><div style="font-size:.7rem;color:rgba(130,120,112,.55)">${f.conduta}</div></div>`;
-    ic.appendChild(m);
-  })};
+  img.onload=()=>{
+    const pts=[];
+    const minPx=28;
+    const w=ic.offsetWidth,h=ic.offsetHeight;
+    (d.findings||[]).forEach((f,i)=>{
+      if(!f.x_point&&!f.y_point)return;
+      let px=f.x_point*w,py=f.y_point*h;
+      // Afasta de marcadores ja posicionados
+      for(let tries=0;tries<8;tries++){
+        let collision=false;
+        for(const p of pts){
+          const dx=px-p.x,dy=py-p.y,dist=Math.sqrt(dx*dx+dy*dy);
+          if(dist<minPx){
+            const angle=Math.atan2(dy,dx)||(Math.PI*2*i/10);
+            px=p.x+Math.cos(angle)*minPx;
+            py=p.y+Math.sin(angle)*minPx;
+            collision=true;break;
+          }
+        }
+        if(!collision)break;
+      }
+      px=Math.max(11,Math.min(w-11,px));
+      py=Math.max(11,Math.min(h-11,py));
+      pts.push({x:px,y:py});
+      const m=document.createElement('div');m.className='point-marker';
+      m.style.left=(px/w*100)+'%';m.style.top=(py/h*100)+'%';
+      m.innerHTML=(i+1)+`<div class="point-tooltip"><div style="font-size:.7rem;font-family:'Space Mono',monospace;color:rgba(130,120,112,.7);text-transform:uppercase;margin-bottom:.2rem">${f.zone}</div><div style="font-size:.8rem;font-weight:500;margin-bottom:.3rem">${f.description}</div><div style="font-size:.7rem;color:rgba(130,120,112,.55)">${f.conduta}</div></div>`;
+      ic.appendChild(m);
+    });
+  };
   const fl=document.getElementById('findings-list');fl.innerHTML='';
   (d.findings||[]).forEach((f,i)=>{fl.innerHTML+=`<div class="finding-card">
     <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem">

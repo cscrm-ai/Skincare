@@ -50,18 +50,28 @@ Write queries in SIMPLE ENGLISH describing WHAT IS VISIBLE:
 - Be SPECIFIC about location: "left side", "right side", "center", "near eyebrow"
 
 GOOD query examples:
-- "red pimple on left forehead"
-- "dark circle under left eye"
-- "enlarged pores on nose tip"
-- "horizontal wrinkle on forehead center"
-- "dark spot on right cheek"
-- "nasolabial fold on left side"
-- "crow feet wrinkle near right eye"
+- "red pimple on left forehead near hairline"
+- "dark circle under left eye close to nose bridge"
+- "enlarged pores on nose tip center"
+- "horizontal wrinkle on upper forehead center"
+- "dark spot on right cheek near ear"
+- "nasolabial fold on left side near mouth corner"
+- "crow feet wrinkle at outer corner of right eye"
 
 BAD query examples (DO NOT USE):
 - "lesao papular" (too technical, model won't understand)
 - "hiperpigmentacao periorbital" (medical jargon)
 - "dark area under both eyes" (too vague, specify left or right)
+- "pimple on forehead" (too vague, specify left/right/center and upper/lower)
+- "wrinkle on face" (which wrinkle? where exactly?)
+
+CRITICAL RULE FOR QUERIES:
+Each query MUST pinpoint a UNIQUE, DISTINCT location. If two findings are in the
+same general area (e.g., both on the forehead), their queries MUST use different
+spatial anchors to differentiate them. Use combinations of:
+- Left/right/center
+- Upper/lower/middle
+- Near [landmark]: hairline, eyebrow, nose bridge, ear, mouth corner, jawline, temple
 
 ## Analysis Protocol
 
@@ -153,8 +163,38 @@ Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portugues
         finding.y_point = coords["y"]
         print()
 
+    # Passo 3: Afastar coordenadas muito proximas para evitar sobreposicao
+    _spread_nearby_points(report.findings)
+
     print(f"[CONCLUIDO] Todas as coordenadas preenchidas via Moondream3\n")
     return report
+
+
+def _spread_nearby_points(findings: list, min_dist: float = 0.04) -> None:
+    """Afasta pontos que estao muito proximos para evitar sobreposicao visual."""
+    import math
+
+    for i in range(len(findings)):
+        for j in range(i + 1, len(findings)):
+            fi, fj = findings[i], findings[j]
+            if fi.x_point == 0 and fi.y_point == 0:
+                continue
+            if fj.x_point == 0 and fj.y_point == 0:
+                continue
+
+            dx = fj.x_point - fi.x_point
+            dy = fj.y_point - fi.y_point
+            dist = math.sqrt(dx * dx + dy * dy)
+
+            if dist < min_dist and dist > 0:
+                # Calcula direcao e afasta o segundo ponto
+                scale = min_dist / dist
+                fj.x_point = fi.x_point + dx * scale
+                fj.y_point = fi.y_point + dy * scale
+                # Clamp entre 0 e 1
+                fj.x_point = max(0.01, min(0.99, fj.x_point))
+                fj.y_point = max(0.01, min(0.99, fj.y_point))
+                print(f"[SPREAD] Achados {i+1} e {j+1} estavam muito proximos, ajustado")
 
 
 if __name__ == "__main__":
