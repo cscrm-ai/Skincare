@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>All Belle — Centro Estetico</title>
+<title>All Belle — Centro Estético</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
 <style>
@@ -124,8 +124,8 @@ input,textarea{-webkit-user-select:text;user-select:text}
     <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#D9BFB2,#D99C94);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 8px 24px rgba(217,156,148,.35)">
       <iconify-icon icon="solar:camera-add-bold" width="34" style="color:#fff"></iconify-icon>
     </div>
-    <h2 style="font-size:1.3rem;font-weight:600;letter-spacing:-.02em;margin-bottom:.4rem;color:#3A3330">Analise sua Pele</h2>
-    <p style="font-size:.85rem;color:rgba(130,120,112,.8);line-height:1.55;margin-bottom:1.5rem">Tire uma foto ou envie uma imagem para receber seu <strong style="color:#D99C94">laudo dermatologico com IA</strong></p>
+    <h2 style="font-size:1.3rem;font-weight:600;letter-spacing:-.02em;margin-bottom:.4rem;color:#3A3330">Analise sua pele</h2>
+    <p style="font-size:.85rem;color:rgba(130,120,112,.8);line-height:1.55;margin-bottom:1.5rem">Tire uma foto ou envie uma imagem para receber seu <strong style="color:#D99C94">laudo dermatológico com IA</strong></p>
     <div style="display:flex;gap:.6rem;justify-content:center" onclick="event.stopPropagation()">
       <button onclick="document.getElementById('file-input').click()" style="flex:1;max-width:180px;padding:.85rem;border-radius:9999px;border:none;background:#D99C94;color:#fff;font-size:.85rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.4rem">
         <iconify-icon icon="solar:upload-bold" width="18"></iconify-icon> Upload
@@ -154,19 +154,23 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 <!-- ═══ LOADING ═══ -->
 <div id="screen-loading" class="screen">
-  <div style="display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding:4rem 0">
-    <div class="spinner"></div>
-    <div id="loading-title" style="font-size:1rem;font-weight:300">Analisando sua pele...</div>
-    <div id="loading-detail" class="font-mono" style="font-size:.75rem;color:rgba(130,120,112,.65)">PROCESSANDO IMAGEM</div>
-    <div id="loading-elapsed" class="font-mono" style="font-size:.65rem;color:rgba(130,120,112,.4);margin-top:.5rem"></div>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:2rem">
+    <div style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#D9BFB2,#D99C94);display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;box-shadow:0 12px 32px rgba(217,156,148,.35);animation:pulse 2s ease-in-out infinite">
+      <iconify-icon icon="solar:magic-stick-3-bold" width="40" style="color:#fff"></iconify-icon>
+    </div>
+    <div id="loading-title" style="font-size:1.4rem;font-weight:600;letter-spacing:-.02em;color:#3A3330;margin-bottom:.5rem">Analisando sua pele...</div>
+    <p style="font-size:.9rem;color:rgba(130,120,112,.75);line-height:1.55;max-width:280px;margin-bottom:1.25rem">A <strong style="color:#D99C94">Dra. Sync</strong> está avaliando cada detalhe da sua pele com inteligência artificial</p>
+    <div id="loading-detail" class="font-mono" style="font-size:.7rem;color:rgba(130,120,112,.5);letter-spacing:.08em;margin-bottom:.75rem">PROCESSANDO IMAGEM</div>
+    <div id="loading-elapsed" class="font-mono" style="font-size:.75rem;color:rgba(217,156,148,.7);font-weight:700"></div>
   </div>
 </div>
+<style>@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 12px 32px rgba(217,156,148,.35)}50%{transform:scale(1.06);box-shadow:0 16px 40px rgba(217,156,148,.5)}}</style>
 
 <!-- ═══ RESULTS ═══ -->
 <div id="screen-results" class="screen">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
     <div>
-      <h2 style="font-size:1.3rem;font-weight:500">Laudo Dermatologico</h2>
+      <h2 style="font-size:1.3rem;font-weight:500">Laudo Dermatológico</h2>
       <div style="display:flex;gap:.5rem;margin-top:.35rem;flex-wrap:wrap">
         <span id="res-fitzpatrick" class="font-mono" style="font-size:.7rem;color:rgba(130,120,112,.7);background:rgba(130,120,112,.06);padding:.2rem .5rem;border-radius:4px"></span>
         <span id="res-score" class="font-mono" style="font-size:.7rem;color:#C4A265;background:rgba(52,211,153,.1);padding:.2rem .5rem;border-radius:4px"></span>
@@ -268,20 +272,20 @@ async function loadAdminData() {
 }
 
 const TIPS=[
-  "Protetor solar e a base de qualquer protocolo de skincare.",
+  "Protetor solar é a base de qualquer protocolo de skincare.",
   "Vitamina C pela manhã potencializa a proteção solar.",
-  "Retinol so deve ser usado a noite — nunca com sol.",
-  "Pele oleosa tambem precisa de hidratação — use texturas leves.",
+  "Retinol só deve ser usado à noite — nunca com sol.",
+  "Pele oleosa também precisa de hidratação — use texturas leves.",
   "Niacinamida ajuda a controlar oleosidade e reduzir poros.",
-  "Água micelar e ótima para limpeza rápida, mas não substitui o sabonete.",
+  "Água micelar é ótima para limpeza rápida, mas não substitui o sabonete.",
   "Esfoliação excessiva danifica a barreira cutânea.",
-  "Ácido hialuronico funciona melhor em pele umida.",
-  "Toque o minimo possivel no rosto durante o dia.",
+  "Ácido hialurônico funciona melhor em pele úmida.",
+  "Toque o mínimo possível no rosto durante o dia.",
   "Troque a fronha do travesseiro pelo menos 2x por semana.",
   "SPF do protetor diminui com o tempo — reaplique a cada 2h.",
-  "Estresse cronico piora acne e dermatites.",
-  "Alimentacao rica em antioxidantes melhora a saude da pele.",
-  "O contorno dos olhos tem pele mais fina — use produtos especificos.",
+  "Estresse crônico piora acne e dermatites.",
+  "Alimentação rica em antioxidantes melhora a saúde da pele.",
+  "O contorno dos olhos tem pele mais fina — use produtos específicos.",
   "Limpar o celular regularmente evita acne na bochecha."
 ];
 
@@ -314,19 +318,19 @@ let timerInterval=null;
 // ══════════════════════════════════════
 let PRODUCTS = [
   {id:'p1', name:'La Roche-Posay Anthelios UV Mune 400', brand:'La Roche-Posay', category:'Protetor Solar', price:89.90, oldPrice:99.90, rating:4.8, reviews:324, tag:'lançamento', sizes:['50ml','100ml'], desc:'Protetor solar FPS 50+ com proteção UVA ultra longa. Textura fluida invisível, resistente a agua. Ideal para uso diário em todos os fototipos.', howToUse:'Aplique generosamente 15 minutos antes da exposição solar. Reaplique a cada 2 horas ou após transpirar.'},
-  {id:'p2', name:'CeraVe Creme Hidratante com Retinol', brand:'CeraVe', category:'Tratamento', price:109.90, oldPrice:129.90, rating:4.6, reviews:187, tag:'lançamento', sizes:['30ml','50ml'], desc:'Retinol encapsulado com ceramidas essenciais. Fórmula suave que melhora textura, reduz linhas finas e fortalece a barreira cutânea durante a noite.', howToUse:'Aplique uma fina camada no rosto limpo a noite. Evite área dos olhos. Use protetor solar pela manhã.'},
+  {id:'p2', name:'CeraVe Creme Hidratante com Retinol', brand:'CeraVe', category:'Tratamento', price:109.90, oldPrice:129.90, rating:4.6, reviews:187, tag:'lançamento', sizes:['30ml','50ml'], desc:'Retinol encapsulado com ceramidas essenciais. Fórmula suave que melhora textura, reduz linhas finas e fortalece a barreira cutânea durante à noite.', howToUse:'Aplique uma fina camada no rosto limpo à noite. Evite área dos olhos. Use protetor solar pela manhã.'},
   {id:'p3', name:'Vichy Mineral 89 Probiotic Fractions', brand:'Vichy', category:'Serum', price:149.90, oldPrice:null, rating:4.7, reviews:256, tag:'lançamento', sizes:['30ml','50ml'], desc:'Serum reparador com frações probióticas e ácido hialurônico. Fortalece a barreira cutânea e recupera a pele estressada em 8 dias.', howToUse:'Aplique 2-3 gotas no rosto limpo, manhã e noite, antes do hidratante.'},
   {id:'p4', name:'ISDIN Fusion Water SPF 50', brand:'ISDIN', category:'Protetor Solar', price:79.90, oldPrice:89.90, rating:4.9, reviews:512, sizes:['50ml'], desc:'Protetor solar de fase aquosa com toque seco e acabamento invisível. Oil-free, não comedogênico. Referência em fotoproteção europeia.', howToUse:'Agite bem antes de usar. Aplique no rosto 30 minutos antes da exposição solar. Reaplique a cada 2h.'},
-  {id:'p5', name:'Neutrogena Sun Fresh FPS 70', brand:'Neutrogena', category:'Protetor Solar', price:49.90, oldPrice:59.90, rating:4.3, reviews:891, sizes:['200ml'], desc:'Alta proteção solar com textura ultra leve e rápida absorção. Resistente a agua e suor. Não oleoso.', howToUse:'Aplique uniformemente antes da exposição solar. Reaplique a cada 2 horas.'},
-  {id:'p6', name:'CeraVe Gel de Limpeza Espumante', brand:'CeraVe', category:'Limpeza', price:49.90, oldPrice:null, rating:4.7, reviews:1203, sizes:['150ml','236ml','473ml'], desc:'Gel de limpeza com ceramidas, niacinamida e ácido hialurônico. Limpa sem ressecar, mantendo a barreira cutânea intacta. Para peles normais a oleosas.', howToUse:'Umedeca o rosto. Aplique o gel massageando suavemente. Enxague com agua.'},
-  {id:'p7', name:'Effaclar Gel Concentrado', brand:'La Roche-Posay', category:'Limpeza', price:69.90, oldPrice:79.90, rating:4.5, reviews:678, sizes:['150ml','300ml'], desc:'Gel de limpeza purificante para pele oleosa. Remove impurezas e excesso de oleosidade, desobstrui poros. Com acido salicilico e zinco.', howToUse:'Aplique no rosto umido com movimentos circulares. Enxague abundantemente.'},
+  {id:'p5', name:'Neutrogena Sun Fresh FPS 70', brand:'Neutrogena', category:'Protetor Solar', price:49.90, oldPrice:59.90, rating:4.3, reviews:891, sizes:['200ml'], desc:'Alta proteção solar com textura ultra leve e rápida absorção. Resistente à água e suor. Não oleoso.', howToUse:'Aplique uniformemente antes da exposição solar. Reaplique a cada 2 horas.'},
+  {id:'p6', name:'CeraVe Gel de Limpeza Espumante', brand:'CeraVe', category:'Limpeza', price:49.90, oldPrice:null, rating:4.7, reviews:1203, sizes:['150ml','236ml','473ml'], desc:'Gel de limpeza com ceramidas, niacinamida e ácido hialurônico. Limpa sem ressecar, mantendo a barreira cutânea intacta. Para peles normais a oleosas.', howToUse:'Umedeça o rosto. Aplique o gel massageando suavemente. Enxague com água.'},
+  {id:'p7', name:'Effaclar Gel Concentrado', brand:'La Roche-Posay', category:'Limpeza', price:69.90, oldPrice:79.90, rating:4.5, reviews:678, sizes:['150ml','300ml'], desc:'Gel de limpeza purificante para pele oleosa. Remove impurezas e excesso de oleosidade, desobstrui poros. Com ácido salicílico e zinco.', howToUse:'Aplique no rosto úmido com movimentos circulares. Enxague abundantemente.'},
   {id:'p8', name:'SkinCeuticals C E Ferulic', brand:'SkinCeuticals', category:'Serum', price:399.90, oldPrice:null, rating:4.9, reviews:1456, sizes:['15ml','30ml'], desc:'Serum antioxidante com Vitamina C pura 15%, Vitamina E e Ácido Ferulico. Protege contra danos ambientais, ilumina e melhora firmeza. Referência mundial.', howToUse:'Aplique 4-5 gotas pela manhã no rosto limpo e seco, antes do protetor solar.'},
-  {id:'p9', name:'The Ordinary Niacinamide 10% + Zinc 1%', brand:'The Ordinary', category:'Serum', price:69.90, oldPrice:null, rating:4.4, reviews:2341, sizes:['30ml','60ml'], desc:'Serum com alta concentração de niacinamida para controle de oleosidade, redução de poros e melhora de textura. Com zinco para acao anti-inflamatória.', howToUse:'Aplique algumas gotas no rosto limpo, manhã e noite, antes do hidratante.'},
-  {id:'p10', name:'Principia Ácido Salicilico 2%', brand:'Principia', category:'Serum', price:54.90, oldPrice:64.90, rating:4.5, reviews:432, sizes:['30ml'], desc:'BHA 2% para desobstrução de poros, controle de cravos e espinhas. Fórmula brasileira com pH otimizado. Leve e não irritante.', howToUse:'Aplique a noite no rosto limpo. Inicie com uso em dias alternados.'},
-  {id:'p11', name:'CeraVe Locao Hidratante', brand:'CeraVe', category:'Hidratante', price:59.90, oldPrice:null, rating:4.8, reviews:1876, sizes:['200ml','473ml'], desc:'Hidratante leve com 3 ceramidas essenciais e ácido hialurônico. Tecnologia MVE de liberacao prolongada por 24h. Para peles normais a secas.', howToUse:'Aplique no rosto e corpo limpos, manhã e noite.'},
+  {id:'p9', name:'The Ordinary Niacinamide 10% + Zinc 1%', brand:'The Ordinary', category:'Serum', price:69.90, oldPrice:null, rating:4.4, reviews:2341, sizes:['30ml','60ml'], desc:'Serum com alta concentração de niacinamida para controle de oleosidade, redução de poros e melhora de textura. Com zinco para ação anti-inflamatória.', howToUse:'Aplique algumas gotas no rosto limpo, manhã e noite, antes do hidratante.'},
+  {id:'p10', name:'Principia Ácido Salicílico 2%', brand:'Principia', category:'Serum', price:54.90, oldPrice:64.90, rating:4.5, reviews:432, sizes:['30ml'], desc:'BHA 2% para desobstrução de poros, controle de cravos e espinhas. Fórmula brasileira com pH otimizado. Leve e não irritante.', howToUse:'Aplique à noite no rosto limpo. Inicie com uso em dias alternados.'},
+  {id:'p11', name:'CeraVe Loção Hidratante', brand:'CeraVe', category:'Hidratante', price:59.90, oldPrice:null, rating:4.8, reviews:1876, sizes:['200ml','473ml'], desc:'Hidratante leve com 3 ceramidas essenciais e ácido hialurônico. Tecnologia MVE de liberação prolongada por 24h. Para peles normais a secas.', howToUse:'Aplique no rosto e corpo limpos, manhã e noite.'},
   {id:'p12', name:'Neutrogena Hydro Boost Water Gel', brand:'Neutrogena', category:'Hidratante', price:54.90, oldPrice:64.90, rating:4.6, reviews:943, sizes:['50g'], desc:'Gel-creme com ácido hialurônico purificado. Hidratação intensa com textura leve e refrescante. Não comedogênico, oil-free.', howToUse:'Aplique no rosto limpo, manhã e noite. Pode ser usado sob maquiagem.'},
-  {id:'p13', name:'Differin Adapaleno Gel 0.3%', brand:'Differin', category:'Tratamento', price:79.90, oldPrice:null, rating:4.3, reviews:234, sizes:['30g'], desc:'Retinoide de terceira geracao para tratamento de acne e renovação celular. Reduz lesoes inflamatórias e comedoes. Uso noturno.', howToUse:'Aplique uma fina camada a noite no rosto limpo e seco. Use protetor solar pela manhã. Evite área dos olhos e labios.'},
-  {id:'p14', name:'Melora C10 Serum Vitamina C', brand:'Melora', category:'Tratamento', price:89.90, oldPrice:109.90, rating:4.4, reviews:321, sizes:['15ml','30ml'], desc:'Vitamina C estabilizada a 10% com acido ferulico. Acao antioxidante, clareadora e anti-idade. Fórmula brasileira com alta estabilidade.', howToUse:'Aplique 3-4 gotas pela manhã no rosto limpo, antes do protetor solar.'},
+  {id:'p13', name:'Differin Adapaleno Gel 0.3%', brand:'Differin', category:'Tratamento', price:79.90, oldPrice:null, rating:4.3, reviews:234, sizes:['30g'], desc:'Retinoide de terceira geração para tratamento de acne e renovação celular. Reduz lesões inflamatórias e comedões. Uso noturno.', howToUse:'Aplique uma fina camada à noite no rosto limpo e seco. Use protetor solar pela manhã. Evite área dos olhos e lábios.'},
+  {id:'p14', name:'Melora C10 Serum Vitamina C', brand:'Melora', category:'Tratamento', price:89.90, oldPrice:109.90, rating:4.4, reviews:321, sizes:['15ml','30ml'], desc:'Vitamina C estabilizada a 10% com ácido ferúlico. Ação antioxidante, clareadora e anti-idade. Fórmula brasileira com alta estabilidade.', howToUse:'Aplique 3-4 gotas pela manhã no rosto limpo, antes do protetor solar.'},
 ];
 
 const DEFAULT_STEPS = ['Demaquilante','Sabonete','Esfoliante','Tônico','Sérum','Antes do Protetor Solar','Tratamento Noturno','Hidratante','Protetor Solar'];
@@ -591,22 +595,22 @@ let LESSONS = [
     category: 'Rotina Basica',
     videos: [
       { title: 'Como montar sua rotina de skincare', desc: 'Passo a passo para iniciantes', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
-      { title: 'Ordem correta dos produtos', desc: 'Saiba a sequencia ideal AM e PM', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Ordem correta dos produtos', desc: 'Saiba a sequência ideal AM e PM', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
     ]
   },
   {
     category: 'Proteção Solar',
     videos: [
-      { title: 'Por que o protetor solar e essencial', desc: 'UV, fotoenvelhecimento e prevencao', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
-      { title: 'Como reaplicar protetor no dia a dia', desc: 'Tecnicas praticas para o cotidiano', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Por que o protetor solar é essencial', desc: 'UV, fotoenvelhecimento e prevenção', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Como reaplicar protetor no dia a dia', desc: 'Técnicas práticas para o cotidiano', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
     ]
   },
   {
     category: 'Ativos e Produtos',
     videos: [
-      { title: 'Vitamina C: como e quando usar', desc: 'Concentracao, forma e aplicacao', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
-      { title: 'Niacinamida vs Ácido Salicilico', desc: 'Qual usar para poros e oleosidade', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
-      { title: 'Retinol: guia completo', desc: 'Beneficios, riscos e como comecar', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Vitamina C: como e quando usar', desc: 'Concentração, forma e aplicação', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Niacinamida vs Ácido Salicílico', desc: 'Qual usar para poros e oleosidade', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Retinol: guia completo', desc: 'Benefícios, riscos e como começar', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
     ]
   },
   {
@@ -614,7 +618,7 @@ let LESSONS = [
     videos: [
       { title: 'Como tratar acne em casa', desc: 'Rotina e ativos recomendados', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
       { title: 'Olheiras: tipos e tratamentos', desc: 'Vascular, pigmentar e estrutural', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
-      { title: 'Melasma e manchas solares', desc: 'Prevencao e clareamento seguro', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
+      { title: 'Melasma e manchas solares', desc: 'Prevenção e clareamento seguro', thumb: 'https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg', url: '#' },
     ]
   }
 ];
@@ -648,7 +652,7 @@ function renderLessons() {
 
     <div class="glass-panel card" style="text-align:center">
       <iconify-icon icon="solar:videocamera-record-bold" width="32" style="color:rgba(217,156,148,.6);display:block;margin:0 auto .5rem"></iconify-icon>
-      <p style="font-size:.8rem;color:rgba(130,120,112,.7)">Novos conteúdos serao adicionados em breve.<br>Fique de olho!</p>
+      <p style="font-size:.8rem;color:rgba(130,120,112,.7)">Novos conteúdos serão adicionados em breve.<br>Fique de olho!</p>
     </div>
   `;
 }
@@ -664,7 +668,7 @@ function playLesson(el) {
 async function renderHome(){
   const p=S.profile(), last=S.lastAnalysis(), today=S.today(), routine=S.routine();
   const h=new Date().getHours();
-  const greet=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
+  const greet=h<12?'Bom dia':h<18?'Boa tarde':'Boà noite';
   const tipIdx=Math.floor(Date.now()/86400000)%TIPS.length;
   const score=last?last.score:'--';
   const days=last?Math.floor((Date.now()-new Date(last.date).getTime())/86400000):null;
@@ -692,9 +696,9 @@ async function renderHome(){
     ${last?`
     <div onclick="navigate('scan')" style="cursor:pointer;border-radius:1.25rem;padding:1.25rem;margin-bottom:1rem;background:linear-gradient(135deg,rgba(217,191,178,.3),rgba(217,156,148,.2));border:1px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="font-size:.7rem;color:rgba(130,120,112,.7);text-transform:uppercase;letter-spacing:.1em;font-family:'Space Mono',monospace;margin-bottom:.3rem">Saude da Pele</div>
+        <div style="font-size:.7rem;color:rgba(130,120,112,.7);text-transform:uppercase;letter-spacing:.1em;font-family:'Space Mono',monospace;margin-bottom:.3rem">Saúde da Pele</div>
         <div style="font-size:2.5rem;font-weight:700;font-family:'Space Mono',monospace;line-height:1">${score}<span style="font-size:.9rem;color:rgba(130,120,112,.6)">/100</span></div>
-        <div style="font-size:.7rem;color:rgba(130,120,112,.7);margin-top:.3rem">${days===0?'Analisado hoje':'Ha '+days+' dia(s)'}</div>
+        <div style="font-size:.7rem;color:rgba(130,120,112,.7);margin-top:.3rem">${days===0?'Analisado hoje':'Há '+days+' dia(s)'}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:.7rem;color:rgba(130,120,112,.65);margin-bottom:.3rem">Fototipo ${p.fitzpatrick||'--'}</div>
@@ -747,7 +751,7 @@ async function renderHome(){
     <div class="glass-panel card" style="text-align:center;padding:.9rem">
       <div style="display:flex;align-items:center;justify-content:center;gap:.4rem;margin-bottom:.4rem"><iconify-icon icon="solar:shield-check-bold" width="16" style="color:#D99C94"></iconify-icon><span class="card-label">PROTETOR SOLAR</span></div>
       <div id="home-timer" style="font-size:2rem;font-weight:600;font-family:'Space Mono',monospace;margin:.2rem 0">--:--:--</div>
-      <div style="font-size:.7rem;color:rgba(130,120,112,.3);margin-bottom:.5rem">${today.reapply_times.length?'Ultima: '+today.reapply_times[today.reapply_times.length-1]:'Nenhuma reaplicação hoje'}</div>
+      <div style="font-size:.7rem;color:rgba(130,120,112,.3);margin-bottom:.5rem">${today.reapply_times.length?'Última: '+today.reapply_times[today.reapply_times.length-1]:'Nenhuma reaplicação hoje'}</div>
       <button onclick="reapply()" style="width:100%;padding:.6rem;border-radius:9999px;border:none;background:linear-gradient(135deg,#D99C94,#C4A265);color:#fff;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit">Reaplicar Protetor</button>
     </div>
 
@@ -828,13 +832,13 @@ function resetUpload(){selectedFile=null;document.getElementById('file-input').v
 let _loadingInterval=null;
 function startLoadingFeedback(){
   const steps=[
-    {at:0,title:'Analisando sua pele...',detail:'ENVIANDO IMAGEM PARA ANALISE'},
-    {at:3,title:'Analisando sua pele...',detail:'IA DERMATOLOGICA AVALIANDO SUA PELE'},
-    {at:10,title:'Identificando achados...',detail:'DETECTANDO AREAS DE ATENCAO'},
-    {at:20,title:'Mapeando pontos na imagem...',detail:'LOCALIZANDO ACHADOS COM PRECISAO'},
+    {at:0,title:'Analisando sua pele...',detail:'ENVIANDO IMAGEM PARA ANÁLISE'},
+    {at:3,title:'A Dra. Sync está avaliando...',detail:'IA DERMATOLÓGICA ANALISANDO SUA PELE'},
+    {at:10,title:'Identificando achados...',detail:'DETECTANDO ÁREAS DE ATENÇÃO'},
+    {at:20,title:'Mapeando pontos na imagem...',detail:'LOCALIZANDO ACHADOS COM PRECISÃO'},
     {at:40,title:'Quase pronto...',detail:'FINALIZANDO COORDENADAS DOS ACHADOS'},
-    {at:60,title:'Finalizando analise...',detail:'GERANDO SEU RELATORIO PERSONALIZADO'},
-    {at:90,title:'Analise detalhada em andamento...',detail:'PROCESSAMENTO COMPLETO EM BREVE'},
+    {at:60,title:'Finalizando análise...',detail:'GERANDO SEU RELATÓRIO PERSONALIZADO'},
+    {at:90,title:'Análise detalhada em andamento...',detail:'PROCESSAMENTO COMPLETO EM BREVE'},
   ];
   const start=Date.now();
   const titleEl=document.getElementById('loading-title');
