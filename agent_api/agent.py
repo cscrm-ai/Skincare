@@ -1,7 +1,7 @@
 """Agente de analise de SkinCare.
 
-Analisa fotografias de pele e gera laudos dermatologicos estruturados
-usando Gemini (analise visual) + Moondream3 via FAL AI (coordenadas).
+Analisa fotografias de pele e gera laudos dermatológicos estruturados
+usando Gemini (análise visual) + Moondream3 via FAL AI (coordenadas).
 Multi-provider: rotaciona entre API keys e modelos para evitar quota.
 """
 
@@ -28,7 +28,7 @@ import fal_client
 
 
 # ═══════════════════════════════════════
-# MULTI-PROVIDER: rotacao de keys e modelos
+# MULTI-PROVIDER: rotação de keys e modelos
 # ═══════════════════════════════════════
 
 def _load_keys(prefix: str) -> list[str]:
@@ -62,7 +62,7 @@ _fal_key_idx = 0
 
 
 def _next_google_key() -> str:
-    """Retorna a proxima Google API key em round-robin."""
+    """Retorna a próxima Google API key em round-robin."""
     global _google_key_idx
     if not GOOGLE_KEYS:
         return os.environ.get("GOOGLE_API_KEY", "")
@@ -72,7 +72,7 @@ def _next_google_key() -> str:
 
 
 def _next_fal_key() -> str:
-    """Retorna a proxima FAL key em round-robin."""
+    """Retorna a próxima FAL key em round-robin."""
     global _fal_key_idx
     if not FAL_KEYS:
         return os.environ.get("FAL_KEY", "")
@@ -160,7 +160,7 @@ Suggest personalized AM and PM routines based on findings.
 
 
 def _get_moondream_points(query: str, image_url: str) -> dict:
-    """Chama Moondream3 via FAL AI com rotacao de keys."""
+    """Chama Moondream3 via FAL AI com rotação de keys."""
     print(f"[MOONDREAM3] Query: '{query}'")
 
     attempts = max(len(FAL_KEYS), 1)
@@ -191,7 +191,7 @@ def _get_moondream_points(query: str, image_url: str) -> dict:
             last_error = e
             err_msg = str(e).lower()
             if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
-                print(f"[FAL] Key ...{key[-6:]} atingiu quota, tentando proxima...")
+                print(f"[FAL] Key ...{key[-6:]} atingiu quota, tentando próxima...")
                 continue
             raise
 
@@ -214,7 +214,7 @@ def _resolve_finding_coords(finding, index: int, image_url: str) -> None:
 
 
 def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport:
-    """Chama Gemini com rotacao de keys e modelos fallback."""
+    """Chama Gemini com rotação de keys e modelos fallback."""
     last_error = None
 
     for model_id in GEMINI_MODELS:
@@ -239,10 +239,10 @@ def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport
                 last_error = e
                 err_msg = str(e).lower()
                 if "quota" in err_msg or "429" in err_msg or "rate" in err_msg:
-                    print(f"[GEMINI] Key ...{key[-6:]} quota excedida, tentando proxima...")
+                    print(f"[GEMINI] Key ...{key[-6:]} quota excedida, tentando próxima...")
                     continue
                 # Erro nao relacionado a quota — tenta proximo modelo
-                print(f"[GEMINI] Erro com {model_id}: {e}, tentando proximo modelo...")
+                print(f"[GEMINI] Erro com {model_id}: {e}, tentando próximo modelo...")
                 break
 
     raise last_error or Exception("Todos os modelos e keys Gemini falharam")
@@ -274,7 +274,7 @@ Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portugues
             for i, finding in enumerate(report.findings)
         ]
         for future in futures:
-            future.result()  # Propaga excecoes se houver
+            future.result()  # Propaga exceções se houver
 
     # Passo 3: Afastar coordenadas muito proximas para evitar sobreposicao
     _spread_nearby_points(report.findings)
@@ -284,7 +284,7 @@ Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portugues
 
 
 def _spread_nearby_points(findings: list, min_dist: float = 0.04) -> None:
-    """Afasta pontos que estao muito proximos para evitar sobreposicao visual."""
+    """Afasta pontos que estão muito próximos para evitar sobreposição visual."""
     import math
 
     for i in range(len(findings)):
@@ -300,14 +300,14 @@ def _spread_nearby_points(findings: list, min_dist: float = 0.04) -> None:
             dist = math.sqrt(dx * dx + dy * dy)
 
             if dist < min_dist and dist > 0:
-                # Calcula direcao e afasta o segundo ponto
+                # Calcula direção e afasta o segundo ponto
                 scale = min_dist / dist
                 fj.x_point = fi.x_point + dx * scale
                 fj.y_point = fi.y_point + dy * scale
                 # Clamp entre 0 e 1
                 fj.x_point = max(0.01, min(0.99, fj.x_point))
                 fj.y_point = max(0.01, min(0.99, fj.y_point))
-                print(f"[SPREAD] Achados {i+1} e {j+1} estavam muito proximos, ajustado")
+                print(f"[SPREAD] Achados {i+1} e {j+1} estavam muito próximos, ajustado")
 
 
 if __name__ == "__main__":

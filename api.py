@@ -120,7 +120,7 @@ def _check_rate_limit(ip: str) -> bool:
     return True
 
 WEATHER_CODES = {
-    0: "Ceu limpo", 1: "Predominantemente limpo", 2: "Parcialmente nublado",
+    0: "Céu limpo", 1: "Predominantemente limpo", 2: "Parcialmente nublado",
     3: "Nublado", 45: "Neblina", 48: "Neblina com geada",
     51: "Garoa leve", 53: "Garoa moderada", 55: "Garoa intensa",
     61: "Chuva leve", 63: "Chuva moderada", 65: "Chuva forte",
@@ -133,8 +133,8 @@ def _uv_recommendation(uv: float) -> str:
     if uv <= 2: return "Baixo risco. Protetor opcional."
     if uv <= 5: return "Moderado. Use protetor FPS 30+."
     if uv <= 7: return "Alto. Use protetor FPS 50+ e reaplique a cada 2h."
-    if uv <= 10: return "Muito alto. Evite exposicao entre 10h-16h. FPS 50+."
-    return "Extremo. Evite o sol. FPS 50+ obrigatorio."
+    if uv <= 10: return "Muito alto. Evite exposição entre 10h-16h. FPS 50+."
+    return "Extremo. Evite o sol. FPS 50+ obrigatório."
 
 
 @app.get("/health")
@@ -171,7 +171,7 @@ async def get_uv(lat: float, lon: float):
 
         # Extract city name from geocoding
         addr = geo.get("address", {})
-        city = addr.get("city") or addr.get("town") or addr.get("municipality") or addr.get("county") or "Sua regiao"
+        city = addr.get("city") or addr.get("town") or addr.get("municipality") or addr.get("county") or "Sua região"
 
         return {
             "uv_index": uv,
@@ -200,7 +200,7 @@ async def analyze(request: Request, image: UploadFile = File(...)):
         return JSONResponse(
             status_code=429,
             content={
-                "error": "Voce atingiu o limite de analises por hora. Tente novamente mais tarde.",
+                "error": "Você atingiu o limite de análises por hora. Tente novamente mais tarde.",
                 "type": "rate_limited",
             },
         )

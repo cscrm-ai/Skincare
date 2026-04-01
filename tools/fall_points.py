@@ -1,4 +1,4 @@
-"""Tool de deteccao de pontos X,Y em imagens via FAL AI (Moondream3).
+"""Tool de detecção de pontos X,Y em imagens via FAL AI (Moondream3).
 
 Utilizada pelo agente Dra. Sync para localizar achados clinicos
 em fotografias de pele.
@@ -31,14 +31,14 @@ def _image_to_data_uri(path: str) -> str:
 def detect_skin_points(image_path: str, query: str) -> str:
     """Detecta as coordenadas X,Y de um achado clinico em uma imagem de pele.
 
-    Use esta ferramenta SEMPRE que precisar marcar a localizacao exata de um
+    Use esta ferramenta SEMPRE que precisar marcar a localização exata de um
     achado clinico na imagem. Ela envia a imagem para o modelo Moondream3
     via FAL AI e retorna as coordenadas normalizadas (0 a 1) do ponto
     detectado.
 
     Args:
         image_path: Caminho absoluto para a imagem de pele a ser analisada.
-        query: Descricao do elemento a localizar na imagem
+        query: Descrição do elemento a localizar na imagem
                (ex: "mancha pigmentar na bochecha esquerda", "acne na zona T").
 
     Returns:

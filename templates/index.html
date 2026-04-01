@@ -318,7 +318,7 @@ let timerInterval=null;
 // ══════════════════════════════════════
 let PRODUCTS = [
   {id:'p1', name:'La Roche-Posay Anthelios UV Mune 400', brand:'La Roche-Posay', category:'Protetor Solar', price:89.90, oldPrice:99.90, rating:4.8, reviews:324, tag:'lançamento', sizes:['50ml','100ml'], desc:'Protetor solar FPS 50+ com proteção UVA ultra longa. Textura fluida invisível, resistente a agua. Ideal para uso diário em todos os fototipos.', howToUse:'Aplique generosamente 15 minutos antes da exposição solar. Reaplique a cada 2 horas ou após transpirar.'},
-  {id:'p2', name:'CeraVe Creme Hidratante com Retinol', brand:'CeraVe', category:'Tratamento', price:109.90, oldPrice:129.90, rating:4.6, reviews:187, tag:'lançamento', sizes:['30ml','50ml'], desc:'Retinol encapsulado com ceramidas essenciais. Fórmula suave que melhora textura, reduz linhas finas e fortalece a barreira cutânea durante à noite.', howToUse:'Aplique uma fina camada no rosto limpo à noite. Evite área dos olhos. Use protetor solar pela manhã.'},
+  {id:'p2', name:'CeraVe Creme Hidratante com Retinol', brand:'CeraVe', category:'Tratamento', price:109.90, oldPrice:129.90, rating:4.6, reviews:187, tag:'lançamento', sizes:['30ml','50ml'], desc:'Retinol encapsulado com ceramidas essenciais. Fórmula suave que melhora textura, reduz linhas finas e fortalece a barreira cutânea durante a noite.', howToUse:'Aplique uma fina camada no rosto limpo à noite. Evite área dos olhos. Use protetor solar pela manhã.'},
   {id:'p3', name:'Vichy Mineral 89 Probiotic Fractions', brand:'Vichy', category:'Serum', price:149.90, oldPrice:null, rating:4.7, reviews:256, tag:'lançamento', sizes:['30ml','50ml'], desc:'Serum reparador com frações probióticas e ácido hialurônico. Fortalece a barreira cutânea e recupera a pele estressada em 8 dias.', howToUse:'Aplique 2-3 gotas no rosto limpo, manhã e noite, antes do hidratante.'},
   {id:'p4', name:'ISDIN Fusion Water SPF 50', brand:'ISDIN', category:'Protetor Solar', price:79.90, oldPrice:89.90, rating:4.9, reviews:512, sizes:['50ml'], desc:'Protetor solar de fase aquosa com toque seco e acabamento invisível. Oil-free, não comedogênico. Referência em fotoproteção europeia.', howToUse:'Agite bem antes de usar. Aplique no rosto 30 minutos antes da exposição solar. Reaplique a cada 2h.'},
   {id:'p5', name:'Neutrogena Sun Fresh FPS 70', brand:'Neutrogena', category:'Protetor Solar', price:49.90, oldPrice:59.90, rating:4.3, reviews:891, sizes:['200ml'], desc:'Alta proteção solar com textura ultra leve e rápida absorção. Resistente à água e suor. Não oleoso.', howToUse:'Aplique uniformemente antes da exposição solar. Reaplique a cada 2 horas.'},
@@ -668,7 +668,7 @@ function playLesson(el) {
 async function renderHome(){
   const p=S.profile(), last=S.lastAnalysis(), today=S.today(), routine=S.routine();
   const h=new Date().getHours();
-  const greet=h<12?'Bom dia':h<18?'Boa tarde':'Boà noite';
+  const greet=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
   const tipIdx=Math.floor(Date.now()/86400000)%TIPS.length;
   const score=last?last.score:'--';
   const days=last?Math.floor((Date.now()-new Date(last.date).getTime())/86400000):null;

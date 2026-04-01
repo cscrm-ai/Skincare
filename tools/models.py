@@ -1,4 +1,4 @@
-"""Schemas Pydantic para o laudo dermatologico da Dra. Sync."""
+"""Schemas Pydantic para o laudo dermatológico da Dra. Sync."""
 
 from typing import Literal
 
@@ -6,31 +6,31 @@ from pydantic import BaseModel, Field
 
 
 class DermatologicalFinding(BaseModel):
-    """Achado clinico individual identificado na imagem."""
+    """Achado clínico individual identificado na imagem."""
 
     description: str = Field(
         ...,
-        description="Descricao clinica do achado (ex: 'melasma malar bilateral')",
+        description="Descrição clínica do achado (ex: 'melasma malar bilateral')",
     )
     zone: str = Field(
         ...,
-        description="Zona facial afetada (ex: 'Macas do rosto', 'Zona T', 'Regiao periorbital')",
+        description="Zona facial afetada (ex: 'Maçãs do rosto', 'Zona T', 'Região periorbital')",
     )
     priority: Literal["PRIORITÁRIO", "RECOMENDADO", "OPCIONAL"] = Field(
         ...,
-        description="Nivel de prioridade clinica do achado",
+        description="Nível de prioridade clínica do achado",
     )
     conduta: str = Field(
         ...,
-        description="Abordagem terapeutica ou cosmetica sugerida",
+        description="Abordagem terapêutica ou cosmética sugerida",
     )
     active_or_procedure: str = Field(
         ...,
-        description="Ativo cosmetico ou procedimento de referencia",
+        description="Ativo cosmético ou procedimento de referência",
     )
     clinical_note: str = Field(
         ...,
-        description="Observacao clinica especifica (contraindicacoes, fototipo, cuidados)",
+        description="Observação clínica específica (contraindicações, fototipo, cuidados)",
     )
     query: str = Field(
         ...,
@@ -47,7 +47,7 @@ class DermatologicalFinding(BaseModel):
 
 
 class SkinAnalysisReport(BaseModel):
-    """Relatorio completo de analise dermatologica."""
+    """Relatório completo de análise dermatológica."""
 
     fitzpatrick_type: Literal["I", "II", "III", "IV", "V", "VI"] = Field(
         ...,
@@ -55,15 +55,15 @@ class SkinAnalysisReport(BaseModel):
     )
     skin_type: str = Field(
         ...,
-        description="Tipo de pele (ex: 'Oleosa, sensivel, fotoenvelhecimento misto')",
+        description="Tipo de pele (ex: 'Oleosa, sensível, fotoenvelhecimento misto')",
     )
     findings: list[DermatologicalFinding] = Field(
         default_factory=list,
-        description="Lista de achados clinicos identificados",
+        description="Lista de achados clínicos identificados",
     )
     am_routine: str = Field(
         ...,
-        description="Rotina de skin care sugerida para manha",
+        description="Rotina de skin care sugerida para manhã",
     )
     pm_routine: str = Field(
         ...,
@@ -71,5 +71,5 @@ class SkinAnalysisReport(BaseModel):
     )
     general_observations: str = Field(
         ...,
-        description="Observacoes gerais e avisos eticos",
+        description="Observações gerais e avisos éticos",
     )
