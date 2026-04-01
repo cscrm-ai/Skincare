@@ -231,6 +231,11 @@ async def analyze(request: Request, image: UploadFile = File(...)):
             file_path.unlink(missing_ok=True)
             return cached
 
+        # Save image as base64 before analysis (for admin)
+        import base64
+        with open(file_path, "rb") as img_f:
+            image_b64 = f"data:image/{ext.lstrip('.')};base64,{base64.b64encode(img_f.read()).decode()}"
+
         report = analyze_image(str(file_path.resolve()))
         result = report.model_dump()
 
@@ -243,11 +248,14 @@ async def analyze(request: Request, image: UploadFile = File(...)):
         try:
             ad = _load_admin_data()
             ad["analyses"].insert(0, {
+                "id": uuid.uuid4().hex[:8],
                 "date": __import__("datetime").datetime.now().isoformat(),
                 "fitzpatrick": result.get("fitzpatrick_type", ""),
                 "skin_type": result.get("skin_type", ""),
                 "score": sum(1 for _ in result.get("findings", [])),
                 "findings_count": len(result.get("findings", [])),
+                "report": result,
+                "image_data": image_b64,
             })
             if len(ad["analyses"]) > 100:
                 ad["analyses"] = ad["analyses"][:100]
