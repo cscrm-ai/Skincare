@@ -6,6 +6,7 @@ usando Gemini (analise visual) + Moondream3 via FAL AI (coordenadas).
 
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -22,6 +23,8 @@ from tools.fall_points import _image_to_data_uri
 from tools.models import SkinAnalysisReport
 
 import fal_client
+
+from tools.retry import retry_with_backoff
 
 SYSTEM_PROMPT = """# Skin Care Specialist Dermatologist
 
@@ -102,13 +105,9 @@ Suggest personalized AM and PM routines based on findings.
 - Remember: ALL output text in pt-BR, ONLY queries in English"""
 
 
-def _get_moondream_points(img_path: str, query: str) -> dict:
+@retry_with_backoff(max_retries=3, base_delay=1.0, quota_delay=30.0)
+def _get_moondream_points(query: str, image_url: str) -> dict:
     """Chama Moondream3 via FAL AI para obter coordenadas X,Y."""
-    if img_path.startswith(("http://", "https://")):
-        image_url = img_path
-    else:
-        image_url = _image_to_data_uri(img_path)
-
     print(f"[MOONDREAM3] Query: '{query}'")
 
     result = fal_client.subscribe(
@@ -124,6 +123,26 @@ def _get_moondream_points(img_path: str, query: str) -> dict:
 
     print("[MOONDREAM3] Nenhum ponto detectado")
     return {"x": 0, "y": 0}
+
+
+def _resolve_finding_coords(finding, index: int, image_url: str) -> None:
+    """Resolve coordenadas para um unico achado, com retry simplificado."""
+    print(f"[ACHADO {index + 1}] {finding.zone}: {finding.description}")
+    coords = _get_moondream_points(finding.query, image_url)
+
+    if coords["x"] == 0 and coords["y"] == 0:
+        simple_query = finding.zone.lower().replace("regiao ", "").replace("zona ", "")
+        print(f"[RETRY] Tentando query simples: '{simple_query}'")
+        coords = _get_moondream_points(simple_query, image_url)
+
+    finding.x_point = coords["x"]
+    finding.y_point = coords["y"]
+
+
+@retry_with_backoff(max_retries=2, base_delay=2.0, quota_delay=30.0)
+def _call_gemini(agent, prompt, img_path):
+    """Chama Gemini com retry automatico."""
+    return agent.run(prompt, images=[Image(filepath=img_path)])
 
 
 def analyze_image(img_path: str) -> SkinAnalysisReport:
@@ -143,25 +162,25 @@ Remember: set x_point=0 and y_point=0 for all findings.
 Write the "query" field in SIMPLE ENGLISH for the detection model.
 Write ALL other fields (description, conduta, zone, etc.) in Brazilian Portuguese."""
 
-    response = agent.run(user_prompt, images=[Image(filepath=img_path)])
+    response = _call_gemini(agent, user_prompt, img_path)
     report = response.content
 
     print(f"\n[AGENTE] Gerou {len(report.findings)} achados. Buscando coordenadas via Moondream3...\n")
 
-    # Passo 2: Para CADA achado, chama Moondream3 para obter coordenadas reais
-    for i, finding in enumerate(report.findings):
-        print(f"[ACHADO {i+1}] {finding.zone}: {finding.description}")
-        coords = _get_moondream_points(img_path, finding.query)
+    # Pre-computa image_url uma unica vez (evita re-ler o arquivo N vezes)
+    if img_path.startswith(("http://", "https://")):
+        image_url = img_path
+    else:
+        image_url = _image_to_data_uri(img_path)
 
-        # Retry com query simplificada se nao detectou
-        if coords["x"] == 0 and coords["y"] == 0:
-            simple_query = finding.zone.lower().replace("regiao ", "").replace("zona ", "")
-            print(f"[RETRY] Tentando query simples: '{simple_query}'")
-            coords = _get_moondream_points(img_path, simple_query)
-
-        finding.x_point = coords["x"]
-        finding.y_point = coords["y"]
-        print()
+    # Passo 2: Chama Moondream3 em PARALELO para todos os achados
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [
+            executor.submit(_resolve_finding_coords, finding, i, image_url)
+            for i, finding in enumerate(report.findings)
+        ]
+        for future in futures:
+            future.result()  # Propaga excecoes se houver
 
     # Passo 3: Afastar coordenadas muito proximas para evitar sobreposicao
     _spread_nearby_points(report.findings)

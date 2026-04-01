@@ -148,8 +148,9 @@ input,textarea{-webkit-user-select:text;user-select:text}
 <div id="screen-loading" class="screen">
   <div style="display:flex;flex-direction:column;align-items:center;gap:1.5rem;padding:4rem 0">
     <div class="spinner"></div>
-    <div style="font-size:1rem;font-weight:300">Analisando sua pele...</div>
-    <div class="font-mono" style="font-size:.75rem;color:rgba(130,120,112,.65)">PROCESSANDO IMAGEM E DETECTANDO ACHADOS</div>
+    <div id="loading-title" style="font-size:1rem;font-weight:300">Analisando sua pele...</div>
+    <div id="loading-detail" class="font-mono" style="font-size:.75rem;color:rgba(130,120,112,.65)">PROCESSANDO IMAGEM</div>
+    <div id="loading-elapsed" class="font-mono" style="font-size:.65rem;color:rgba(130,120,112,.4);margin-top:.5rem"></div>
   </div>
 </div>
 
@@ -816,13 +817,41 @@ function handleDrop(e){e.preventDefault();e.target.closest('.upload-area')?.clas
 function handleFile(f){if(!f)return;selectedFile=f;const r=new FileReader();r.onload=e=>{document.getElementById('preview-img').src=e.target.result;document.getElementById('upload-zone').style.display='none';document.getElementById('preview-zone').style.display='block'};r.readAsDataURL(f)}
 function resetUpload(){selectedFile=null;document.getElementById('file-input').value='';document.getElementById('upload-zone').style.display='flex';document.getElementById('preview-zone').style.display='none'}
 
+let _loadingInterval=null;
+function startLoadingFeedback(){
+  const steps=[
+    {at:0,title:'Analisando sua pele...',detail:'ENVIANDO IMAGEM PARA ANALISE'},
+    {at:3,title:'Analisando sua pele...',detail:'IA DERMATOLOGICA AVALIANDO SUA PELE'},
+    {at:10,title:'Identificando achados...',detail:'DETECTANDO AREAS DE ATENCAO'},
+    {at:20,title:'Mapeando pontos na imagem...',detail:'LOCALIZANDO ACHADOS COM PRECISAO'},
+    {at:40,title:'Quase pronto...',detail:'FINALIZANDO COORDENADAS DOS ACHADOS'},
+    {at:60,title:'Finalizando analise...',detail:'GERANDO SEU RELATORIO PERSONALIZADO'},
+    {at:90,title:'Analise detalhada em andamento...',detail:'PROCESSAMENTO COMPLETO EM BREVE'},
+  ];
+  const start=Date.now();
+  const titleEl=document.getElementById('loading-title');
+  const detailEl=document.getElementById('loading-detail');
+  const elapsedEl=document.getElementById('loading-elapsed');
+  _loadingInterval=setInterval(()=>{
+    const elapsed=Math.floor((Date.now()-start)/1000);
+    if(elapsedEl)elapsedEl.textContent=elapsed+'s';
+    let current=steps[0];
+    for(const s of steps){if(elapsed>=s.at)current=s}
+    if(titleEl)titleEl.textContent=current.title;
+    if(detailEl)detailEl.textContent=current.detail;
+  },1000);
+}
+function stopLoadingFeedback(){if(_loadingInterval){clearInterval(_loadingInterval);_loadingInterval=null}}
+
 async function submitAnalysis(){
   if(!selectedFile)return;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-loading').classList.add('active');
+  startLoadingFeedback();
   const form=new FormData();form.append('image',selectedFile);
   try{
     const res=await fetch('/analyze',{method:'POST',body:form});
+    stopLoadingFeedback();
     if(!res.ok)throw new Error('Erro '+res.status+': '+(await res.text()).slice(0,200));
     const data=await res.json();
     data.image_url=document.getElementById('preview-img').src;
@@ -834,6 +863,7 @@ async function submitAnalysis(){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-results').classList.add('active');
   }catch(e){
+    stopLoadingFeedback();
     const msg=e.message||'';
     let userMsg='Ocorreu um erro ao analisar sua foto. Tente novamente.';
     if(msg.includes('quota')||msg.includes('429')||msg.includes('rate'))

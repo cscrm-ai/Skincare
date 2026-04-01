@@ -1,11 +1,14 @@
 """API FastAPI for SkinCare AI agent + frontend serving."""
 
 import asyncio
+import hashlib
 import json
 import os
 import shutil
+import time
 import traceback
 import uuid
+from collections import defaultdict
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -59,6 +62,62 @@ app.add_middleware(
 
 UPLOAD_DIR = Path("/tmp/skincare_uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+# ═══════════════════════════════════════
+# CACHE (SHA-256 do arquivo → JSON em /tmp)
+# ═══════════════════════════════════════
+CACHE_DIR = Path("/tmp/skincare_cache")
+CACHE_DIR.mkdir(exist_ok=True)
+CACHE_TTL = 86400  # 24 horas
+
+
+def _get_image_hash(file_path: Path) -> str:
+    h = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _get_cached_result(image_hash: str) -> dict | None:
+    cache_file = CACHE_DIR / f"{image_hash}.json"
+    if cache_file.exists():
+        try:
+            data = json.loads(cache_file.read_text())
+            if time.time() - data.get("_cached_at", 0) < CACHE_TTL:
+                print(f"[CACHE HIT] {image_hash[:12]}...")
+                result = data.copy()
+                result.pop("_cached_at", None)
+                return result
+            else:
+                cache_file.unlink(missing_ok=True)
+        except (json.JSONDecodeError, ValueError):
+            cache_file.unlink(missing_ok=True)
+    return None
+
+
+def _set_cached_result(image_hash: str, result: dict):
+    cache_file = CACHE_DIR / f"{image_hash}.json"
+    data = {**result, "_cached_at": time.time()}
+    cache_file.write_text(json.dumps(data, ensure_ascii=False))
+
+
+# ═══════════════════════════════════════
+# RATE LIMITING (in-memory por IP)
+# ═══════════════════════════════════════
+RATE_LIMIT_MAX = 10  # analises por IP
+RATE_LIMIT_WINDOW = 3600  # 1 hora
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
+
+
+def _check_rate_limit(ip: str) -> bool:
+    now = time.time()
+    timestamps = _rate_limit_store[ip]
+    _rate_limit_store[ip] = [t for t in timestamps if now - t < RATE_LIMIT_WINDOW]
+    if len(_rate_limit_store[ip]) >= RATE_LIMIT_MAX:
+        return False
+    _rate_limit_store[ip].append(now)
+    return True
 
 WEATHER_CODES = {
     0: "Ceu limpo", 1: "Predominantemente limpo", 2: "Parcialmente nublado",
@@ -132,7 +191,20 @@ async def index():
 
 
 @app.post("/analyze")
-async def analyze(image: UploadFile = File(...)):
+async def analyze(request: Request, image: UploadFile = File(...)):
+    # Rate limit check
+    client_ip = request.headers.get(
+        "x-forwarded-for", request.client.host if request.client else "unknown"
+    ).split(",")[0].strip()
+    if not _check_rate_limit(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={
+                "error": "Voce atingiu o limite de analises por hora. Tente novamente mais tarde.",
+                "type": "rate_limited",
+            },
+        )
+
     try:
         ext = Path(image.filename).suffix or ".jpg"
         unique_name = f"{uuid.uuid4().hex[:12]}{ext}"
@@ -141,8 +213,18 @@ async def analyze(image: UploadFile = File(...)):
         with open(file_path, "wb") as f:
             shutil.copyfileobj(image.file, f)
 
+        # Check cache
+        image_hash = _get_image_hash(file_path)
+        cached = _get_cached_result(image_hash)
+        if cached:
+            file_path.unlink(missing_ok=True)
+            return cached
+
         report = analyze_image(str(file_path.resolve()))
         result = report.model_dump()
+
+        # Store in cache
+        _set_cached_result(image_hash, result)
 
         file_path.unlink(missing_ok=True)
 
