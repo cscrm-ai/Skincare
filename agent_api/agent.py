@@ -217,6 +217,8 @@ def _resolve_finding_coords(finding, index: int, image_url: str) -> None:
 def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport:
     """Chama Gemini com rotação de keys e modelos fallback."""
     last_error = None
+    total_attempts = len(GEMINI_MODELS) * max(len(GOOGLE_KEYS), 1)
+    print(f"[GEMINI] {len(GOOGLE_KEYS)} keys x {len(GEMINI_MODELS)} modelos = {total_attempts} tentativas possíveis")
 
     for model_id in GEMINI_MODELS:
         for _key_attempt in range(max(len(GOOGLE_KEYS), 1)):
@@ -227,7 +229,7 @@ def _call_gemini_with_fallback(prompt: str, img_path: str) -> SkinAnalysisReport
 
                 agent = Agent(
                     name="skincare_analyst",
-                    model=Gemini(id=model_id),
+                    model=Gemini(id=model_id, api_key=key),
                     output_schema=SkinAnalysisReport,
                     instructions=SYSTEM_PROMPT,
                     markdown=True,
