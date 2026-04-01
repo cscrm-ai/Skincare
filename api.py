@@ -139,10 +139,12 @@ def _uv_recommendation(uv: float) -> str:
 
 @app.get("/health")
 async def health():
+    gk = os.environ.get("GOOGLE_API_KEY", "")
     return {
         "status": "ok",
         "fal_key": bool(os.environ.get("FAL_KEY")),
-        "google_key": bool(os.environ.get("GOOGLE_API_KEY")),
+        "google_key": bool(gk),
+        "google_key_suffix": gk[-6:] if gk else "MISSING",
     }
 
 
