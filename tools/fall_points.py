@@ -1,6 +1,6 @@
 """Tool de detecção de pontos X,Y em imagens via FAL AI (Moondream3).
 
-Utilizada pelo agente Dra. Sync para localizar achados clinicos
+Utilizada pelo agente de análise para localizar achados clínicos
 em fotografias de pele.
 """
 

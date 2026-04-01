@@ -1,4 +1,4 @@
-"""Schemas Pydantic para o laudo dermatológico da Dra. Sync."""
+"""Schemas Pydantic para o laudo dermatológico."""
 
 from typing import Literal
 
