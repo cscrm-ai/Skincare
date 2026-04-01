@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>All Belle — Centro Estetico</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Metropolis:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
 <style>
 :root{--rose:#D9BFB2;--taupe:#827870;--salmon:#D99C94;--cream:#F0EBE3;--gold:#C4A265;--dark:#3A3330;--white:#FDFBF9;--bg:#FAF7F4}
@@ -30,7 +30,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 
 /* Bottom Nav */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;display:flex;justify-content:space-around;align-items:center;padding:.5rem 0 calc(.5rem + env(safe-area-inset-bottom));background:rgba(255,255,255,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(130,120,112,.12)}
-.nav-tab{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.4rem .6rem;border-radius:1rem;cursor:pointer;transition:all .3s;background:none;border:none;color:var(--taupe);opacity:.45;font-size:.55rem;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+.nav-tab{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.5rem .8rem;min-width:44px;min-height:44px;border-radius:1rem;cursor:pointer;transition:all .3s;background:none;border:none;color:var(--taupe);opacity:.45;font-size:.55rem;font-family:'Inter',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-weight:500;justify-content:center}
 .nav-tab.active{opacity:1;color:var(--salmon)}.nav-tab.active iconify-icon{color:var(--salmon)}
 
 /* Buttons */
@@ -60,7 +60,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
 .point-marker{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--salmon);border:2px solid #fff;transform:translate(-50%,-50%);cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;font-family:'Space Mono',monospace;color:#fff;z-index:10}
 .point-marker:hover{transform:translate(-50%,-50%) scale(1.3);box-shadow:0 0 15px rgba(217,156,148,.5)}
 .point-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border:1px solid rgba(130,120,112,.12);border-radius:.75rem;padding:.75rem;min-width:220px;display:none;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.1);color:var(--dark)}
-.point-marker:hover .point-tooltip{display:block}
+.point-marker:hover .point-tooltip,.point-marker.active .point-tooltip{display:block}
 .finding-card{background:#fff;border:1px solid rgba(130,120,112,.08);border-radius:1.25rem;padding:1rem;margin-bottom:.75rem}
 .finding-priority{font-size:.55rem;font-family:'Inter',sans-serif;padding:.2rem .5rem;border-radius:4px;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
 .priority-PRIORIT\c1 RIO,.priority-PRIORITÁRIO{background:rgba(192,57,43,.1);color:#c0392b;border:1px solid rgba(192,57,43,.2)}
@@ -833,7 +833,26 @@ async function submitAnalysis(){
     renderResults(currentReport);
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-results').classList.add('active');
-  }catch(e){alert('Erro: '+e.message);navigate('scan')}
+  }catch(e){
+    const msg=e.message||'';
+    let userMsg='Ocorreu um erro ao analisar sua foto. Tente novamente.';
+    if(msg.includes('quota')||msg.includes('429')||msg.includes('rate'))
+      userMsg='Limite de análises atingido no momento. Aguarde alguns minutos e tente novamente.';
+    else if(msg.includes('500'))
+      userMsg='Nosso servidor está temporariamente indisponível. Tente novamente em instantes.';
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-scan').classList.add('active');
+    // Show inline error instead of alert
+    const ez=document.getElementById('upload-zone');
+    ez.style.display='flex';
+    document.getElementById('preview-zone').style.display='none';
+    const existing=document.getElementById('scan-error');if(existing)existing.remove();
+    const errDiv=document.createElement('div');errDiv.id='scan-error';
+    errDiv.style.cssText='background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:1rem;padding:1rem;margin-top:1rem;text-align:center';
+    errDiv.innerHTML=`<iconify-icon icon="solar:danger-triangle-bold" width="24" style="color:#c0392b;display:block;margin:0 auto .5rem"></iconify-icon><p style="font-size:.85rem;color:#c0392b;margin-bottom:.3rem;font-weight:500">${userMsg}</p><p style="font-size:.7rem;color:rgba(192,57,43,.6)">${msg.slice(0,100)}</p>`;
+    ez.parentNode.insertBefore(errDiv,ez.nextSibling);
+    setTimeout(()=>{const el=document.getElementById('scan-error');if(el)el.remove()},10000);
+  }
 }
 
 function renderResults(d){
@@ -872,6 +891,7 @@ function renderResults(d){
       pts.push({x:px,y:py});
       const m=document.createElement('div');m.className='point-marker';
       m.style.left=(px/w*100)+'%';m.style.top=(py/h*100)+'%';
+      m.addEventListener('click',function(e){e.stopPropagation();ic.querySelectorAll('.point-marker').forEach(p=>p.classList.remove('active'));this.classList.toggle('active')});
       m.innerHTML=(i+1)+`<div class="point-tooltip"><div style="font-size:.7rem;font-family:'Space Mono',monospace;color:rgba(130,120,112,.7);text-transform:uppercase;margin-bottom:.2rem">${f.zone}</div><div style="font-size:.8rem;font-weight:500;margin-bottom:.3rem">${f.description}</div><div style="font-size:.7rem;color:rgba(130,120,112,.55)">${f.conduta}</div></div>`;
       ic.appendChild(m);
     });
@@ -1069,6 +1089,9 @@ function closeFirstPopup(goToScan){
 // ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
+// Close marker tooltips on tap outside
+document.addEventListener('click',()=>document.querySelectorAll('.point-marker.active').forEach(p=>p.classList.remove('active')));
+
 loadAdminData().finally(() => {
   navigate('home');
   setTimeout(checkFirstAccess, 600);

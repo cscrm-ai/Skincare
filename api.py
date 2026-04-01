@@ -165,6 +165,12 @@ async def analyze(image: UploadFile = File(...)):
         return result
     except Exception as e:
         traceback.print_exc()
+        err_msg = str(e).lower()
+        if "quota" in err_msg or "rate" in err_msg or "429" in err_msg:
+            return JSONResponse(
+                status_code=429,
+                content={"error": "Limite de análises atingido. Aguarde alguns minutos.", "type": "quota_exceeded"},
+            )
         return JSONResponse(
             status_code=500,
             content={"error": str(e), "type": type(e).__name__},
