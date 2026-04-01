@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>All Belle · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
+<style>
+:root{--rose:#D9BFB2;--taupe:#827870;--salmon:#D99C94;--cream:#F0EBE3;--gold:#C4A265;--dark:#3A3330;--bg:#FAF7F4;--white:#fff;--border:rgba(130,120,112,.12);--text-light:rgba(130,120,112,.7)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--dark);display:flex;min-height:100vh}
+
+/* Sidebar */
+.sidebar{width:220px;background:var(--white);border-right:1px solid var(--border);padding:1.5rem 0;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column}
+.sidebar-brand{padding:0 1.25rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:.75rem}
+.sidebar-brand h1{font-size:1rem;font-weight:600;letter-spacing:.02em}
+.sidebar-brand span{font-size:.65rem;color:var(--taupe);text-transform:uppercase;letter-spacing:.15em}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.6rem 1.25rem;cursor:pointer;transition:all .2s;color:var(--taupe);font-size:.8rem;font-weight:500;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(217,191,178,.08);color:var(--dark)}
+.nav-item.active{background:rgba(217,191,178,.12);color:var(--salmon);border-left-color:var(--salmon)}
+.nav-item iconify-icon{font-size:1.1rem}
+.sidebar-footer{margin-top:auto;padding:.75rem 1.25rem;border-top:1px solid var(--border)}
+.sidebar-footer a{font-size:.75rem;color:var(--taupe);text-decoration:none;display:flex;align-items:center;gap:.4rem}
+
+/* Main */
+.main{margin-left:220px;flex:1;padding:2rem;max-width:1000px}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:1.4rem;font-weight:600;margin-bottom:1.5rem}
+
+/* Cards */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:1rem;padding:1.25rem;text-align:center}
+.stat-value{font-size:2rem;font-weight:600;font-family:'Space Mono',monospace;color:var(--salmon)}
+.stat-label{font-size:.7rem;color:var(--taupe);text-transform:uppercase;letter-spacing:.1em;margin-top:.25rem}
+
+/* Table */
+.table-wrap{background:var(--white);border:1px solid var(--border);border-radius:1rem;overflow:hidden;margin-bottom:1.5rem}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+th{text-align:left;padding:.75rem 1rem;font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--taupe);background:rgba(130,120,112,.04);border-bottom:1px solid var(--border);font-weight:600}
+td{padding:.6rem 1rem;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(217,191,178,.04)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border-radius:8px;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:var(--white);color:var(--dark);font-family:inherit}
+.btn:hover{background:rgba(130,120,112,.06)}
+.btn-primary{background:var(--salmon);color:var(--white);border-color:var(--salmon)}
+.btn-primary:hover{background:#c88a82}
+.btn-sm{padding:.35rem .65rem;font-size:.7rem}
+.btn-danger{color:#c0392b;border-color:rgba(192,57,43,.2)}
+.btn-danger:hover{background:rgba(192,57,43,.06)}
+
+/* Forms */
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.7rem;font-weight:600;color:var(--taupe);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit;color:var(--dark);background:var(--white);transition:border-color .2s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{outline:none;border-color:var(--salmon)}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:1rem;padding:1.5rem;width:90%;max-width:550px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-title{font-size:1rem;font-weight:600;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between}
+.modal-close{cursor:pointer;background:none;border:none;font-size:1.2rem;color:var(--taupe)}
+
+/* Tags */
+.tag{display:inline-block;padding:.2rem .5rem;border-radius:4px;font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.tag-lancamento{background:rgba(196,162,101,.15);color:var(--gold)}
+
+/* Guide table */
+.guide-table{overflow-x:auto}
+.guide-table table{min-width:900px}
+.guide-table th,.guide-table td{font-size:.7rem;padding:.5rem;min-width:110px}
+.guide-table td{white-space:pre-line}
+
+/* Tips list */
+.tip-item{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;margin-bottom:.5rem;background:var(--white)}
+.tip-text{flex:1;font-size:.8rem}
+.tip-actions{display:flex;gap:.25rem}
+
+/* Empty state */
+.empty{text-align:center;padding:3rem;color:var(--taupe)}
+.empty iconify-icon{display:block;margin:0 auto .75rem;opacity:.3}
+
+/* Toast */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--dark);color:var(--white);padding:.6rem 1.2rem;border-radius:8px;font-size:.8rem;z-index:200;opacity:0;transition:opacity .3s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h1>ALL BELLE</h1>
+    <span>Painel Admin</span>
+  </div>
+  <div class="nav-item active" onclick="showPage('dashboard')"><iconify-icon icon="solar:chart-2-bold"></iconify-icon>Dashboard</div>
+  <div class="nav-item" onclick="showPage('products')"><iconify-icon icon="solar:bag-4-bold"></iconify-icon>Produtos</div>
+  <div class="nav-item" onclick="showPage('videos')"><iconify-icon icon="solar:play-circle-bold"></iconify-icon>Vídeos</div>
+  <div class="nav-item" onclick="showPage('tips')"><iconify-icon icon="solar:lightbulb-bolt-bold"></iconify-icon>Dicas do Dia</div>
+  <div class="nav-item" onclick="showPage('guide')"><iconify-icon icon="solar:checklist-bold"></iconify-icon>Guia de Rotinas</div>
+  <div class="nav-item" onclick="showPage('analyses')"><iconify-icon icon="solar:heart-pulse-bold"></iconify-icon>Análises</div>
+  <div class="nav-item" onclick="showPage('settings')"><iconify-icon icon="solar:settings-bold"></iconify-icon>Configurações</div>
+  <div class="sidebar-footer">
+    <a href="/"><iconify-icon icon="solar:arrow-left-linear"></iconify-icon>Voltar ao App</a>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ═══ DASHBOARD ═══ -->
+<div id="page-dashboard" class="page active">
+  <h2 class="page-title">Dashboard</h2>
+  <div class="stat-grid" id="stats"></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Últimas Análises</th><th>Tipo de Pele</th><th>Fototipo</th><th>Achados</th><th>Data</th></tr></thead>
+      <tbody id="recent-analyses"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ PRODUCTS ═══ -->
+<div id="page-products" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+    <h2 class="page-title" style="margin-bottom:0">Produtos</h2>
+    <button class="btn btn-primary" onclick="openProductModal()"><iconify-icon icon="solar:add-circle-linear"></iconify-icon>Novo Produto</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Nome</th><th>Marca</th><th>Passo</th><th>Tipos de Pele</th><th>Preço</th><th>Tag</th><th>Ações</th></tr></thead>
+      <tbody id="products-table"></tbody>
+    </table>
+  </div>
+  <div id="products-empty" class="empty" style="display:none">
+    <iconify-icon icon="solar:bag-4-linear" width="40"></iconify-icon>
+    <p>Nenhum produto cadastrado</p>
+  </div>
+</div>
+
+<!-- ═══ VIDEOS ═══ -->
+<div id="page-videos" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+    <h2 class="page-title" style="margin-bottom:0">Vídeos</h2>
+    <button class="btn btn-primary" onclick="openVideoModal()"><iconify-icon icon="solar:add-circle-linear"></iconify-icon>Novo Vídeo</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Título</th><th>Categoria</th><th>URL</th><th>Ações</th></tr></thead>
+      <tbody id="videos-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ TIPS ═══ -->
+<div id="page-tips" class="page">
+  <h2 class="page-title">Dicas do Dia</h2>
+  <div style="display:flex;gap:.5rem;margin-bottom:1.25rem">
+    <input id="new-tip" placeholder="Adicionar nova dica..." style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"/>
+    <button class="btn btn-primary" onclick="addTip()">Adicionar</button>
+  </div>
+  <div id="tips-list"></div>
+</div>
+
+<!-- ═══ GUIDE ═══ -->
+<div id="page-guide" class="page">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+    <h2 class="page-title" style="margin-bottom:0">Guia de Rotinas</h2>
+    <button class="btn btn-primary btn-sm" onclick="showPage('products')"><iconify-icon icon="solar:add-circle-linear"></iconify-icon>Adicionar Produto</button>
+  </div>
+  <div id="guide-table-view" class="guide-table"></div>
+</div>
+
+<!-- ═══ ANALYSES ═══ -->
+<div id="page-analyses" class="page">
+  <h2 class="page-title">Análises Realizadas</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Data</th><th>Tipo de Pele</th><th>Fototipo</th><th>Achados</th></tr></thead>
+      <tbody id="analyses-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═══ -->
+<div id="page-settings" class="page">
+  <h2 class="page-title">Configurações</h2>
+  <div style="max-width:480px">
+    <div class="form-group">
+      <label>Nome do App</label>
+      <input id="set-name" onchange="saveSettings()"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Latitude Padrão</label>
+        <input id="set-lat" type="number" step="0.01" onchange="saveSettings()"/>
+      </div>
+      <div class="form-group">
+        <label>Longitude Padrão</label>
+        <input id="set-lon" type="number" step="0.01" onchange="saveSettings()"/>
+      </div>
+    </div>
+
+    <div style="margin-top:1.5rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
+        <div>
+          <div style="font-size:.9rem;font-weight:600">Tipos de Pele</div>
+          <div style="font-size:.7rem;color:var(--taupe);margin-top:.1rem">Usados nos produtos e no guia de rotinas</div>
+        </div>
+      </div>
+      <div id="skin-types-list" style="margin-bottom:.75rem"></div>
+      <div style="display:flex;gap:.5rem">
+        <input id="new-skin-type" placeholder="Novo tipo de pele..." style="flex:1;padding:.5rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.8rem;font-family:inherit"/>
+        <button class="btn btn-primary" onclick="addSkinType()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title"><span id="modal-title-text"></span><button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+let D = null; // admin data
+
+async function init() {
+  const r = await fetch('/api/admin/data');
+  D = await r.json();
+  showPage('dashboard');
+}
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const items = document.querySelectorAll('.nav-item');
+  const map = {dashboard:0,products:1,videos:2,tips:3,guide:4,analyses:5,settings:6};
+  if (map[name] !== undefined) items[map[name]].classList.add('active');
+
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'products') renderProducts();
+  if (name === 'videos') renderVideos();
+  if (name === 'tips') renderTips();
+  if (name === 'guide') { renderGuideTable(); showGuideView('table'); }
+  if (name === 'analyses') renderAnalyses();
+  if (name === 'settings') renderSettings();
+}
+
+async function save() {
+  await fetch('/api/admin/data', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(D) });
+  toast('Salvo com sucesso!');
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+// ═══ DASHBOARD ═══
+async function renderDashboard() {
+  const r = await fetch('/api/admin/stats');
+  const s = await r.json();
+  document.getElementById('stats').innerHTML = [
+    { v: s.analyses, l: 'Análises' },
+    { v: s.products, l: 'Produtos' },
+    { v: s.videos, l: 'Vídeos' },
+    { v: s.tips, l: 'Dicas' },
+    { v: s.guide_types_filled + '/8', l: 'Guia Completo' },
+  ].map(x => `<div class="stat-card"><div class="stat-value">${x.v}</div><div class="stat-label">${x.l}</div></div>`).join('');
+
+  document.getElementById('recent-analyses').innerHTML = (D.analyses || []).slice(0, 10).map(a => `
+    <tr><td>${a.skin_type || '—'}</td><td>${a.skin_type || '—'}</td><td>${a.fitzpatrick || '—'}</td><td>${a.findings_count || 0}</td><td>${new Date(a.date).toLocaleDateString('pt-BR')}</td></tr>
+  `).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--taupe)">Nenhuma análise ainda</td></tr>';
+}
+
+// ═══ PRODUCTS ═══
+function renderProducts() {
+  const p = D.products || [];
+  document.getElementById('products-empty').style.display = p.length ? 'none' : 'block';
+  document.getElementById('products-table').innerHTML = p.map((x, i) => `
+    <tr>
+      <td><strong>${x.name}</strong></td>
+      <td>${x.brand}</td>
+      <td>${x.routineStep || '—'}</td>
+      <td style="font-size:.7rem">${(x.forSkinTypes||[]).join(', ') || '—'}</td>
+      <td>R$ ${(x.price||0).toFixed(2).replace('.',',')}${x.oldPrice ? ' <span style="text-decoration:line-through;color:var(--taupe);font-size:.7rem">R$ ' + x.oldPrice.toFixed(2).replace('.',',') + '</span>' : ''}</td>
+      <td>${x.tag === 'lancamento' ? '<span class="tag tag-lancamento">Lançamento</span>' : '—'}</td>
+      <td>
+        <button class="btn btn-sm" onclick="editProduct(${i})"><iconify-icon icon="solar:pen-linear"></iconify-icon></button>
+        <button class="btn btn-sm btn-danger" onclick="deleteProduct(${i})"><iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openProductModal(idx) {
+  const p = idx !== undefined ? D.products[idx] : {};
+  document.getElementById('modal-title-text').textContent = idx !== undefined ? 'Editar Produto' : 'Novo Produto';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label>Nome</label><input id="pf-name" value="${p.name||''}"/></div>
+    <div class="form-group"><label>Marca</label><input id="pf-brand" value="${p.brand||''}"/></div>
+    <div class="form-row">
+      <div class="form-group"><label>Preço (R$)</label><input id="pf-price" type="number" step="0.01" value="${p.price||''}"/></div>
+      <div class="form-group"><label>Preço Antigo (R$)</label><input id="pf-old" type="number" step="0.01" value="${p.oldPrice||''}"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Rating (0-5)</label><input id="pf-rating" type="number" step="0.1" min="0" max="5" value="${p.rating||''}"/></div>
+      <div class="form-group"><label>Avaliações</label><input id="pf-reviews" type="number" value="${p.reviews||''}"/></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Passo da Rotina</label>
+        <select id="pf-step">
+          <option value="">— Nenhum —</option>
+          ${(D.skincare_guide?.steps||['Demaquilante','Sabonete','Esfoliante','Tônico','Sérum','Antes do Protetor Solar','Tratamento Noturno','Hidratante','Protetor Solar']).map(s=>`<option value="${s}" ${p.routineStep===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Para Quais Tipos de Pele</label>
+        <select id="pf-skin-types" multiple size="4">
+          ${getSkinTypes().map(t=>`<option value="${t}" ${(p.forSkinTypes||[]).includes(t)?'selected':''}>${t}</option>`).join('')}
+        </select>
+        <div style="font-size:.6rem;color:var(--taupe);margin-top:.2rem">Ctrl+Click para selecionar múltiplos</div>
+      </div>
+    </div>
+    <div class="form-group"><label>Tamanhos (separados por vírgula)</label><input id="pf-sizes" value="${(p.sizes||[]).join(', ')}"/></div>
+    <div class="form-group"><label>Descrição</label><textarea id="pf-desc">${p.desc||''}</textarea></div>
+    <div class="form-group"><label>Como Usar</label><textarea id="pf-use">${p.howToUse||''}</textarea></div>
+    <div class="form-group"><label>Link de Compra (URL)</label><input id="pf-url" type="url" value="${p.purchaseUrl||''}" placeholder="https://..."/></div>
+    <div class="form-group"><label><input type="checkbox" id="pf-tag" ${p.tag==='lancamento'?'checked':''}/> Marcar como Lançamento</label></div>
+    <button class="btn btn-primary" onclick="saveProduct(${idx !== undefined ? idx : -1})">Salvar</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveProduct(idx) {
+  const p = {
+    id: idx >= 0 ? D.products[idx].id : uid(),
+    name: document.getElementById('pf-name').value,
+    brand: document.getElementById('pf-brand').value,
+    price: parseFloat(document.getElementById('pf-price').value) || 0,
+    oldPrice: parseFloat(document.getElementById('pf-old').value) || null,
+    rating: parseFloat(document.getElementById('pf-rating').value) || 0,
+    reviews: parseInt(document.getElementById('pf-reviews').value) || 0,
+    sizes: document.getElementById('pf-sizes').value.split(',').map(s => s.trim()).filter(Boolean),
+    desc: document.getElementById('pf-desc').value,
+    howToUse: document.getElementById('pf-use').value,
+    purchaseUrl: document.getElementById('pf-url').value.trim() || null,
+    routineStep: document.getElementById('pf-step').value || null,
+    forSkinTypes: Array.from(document.getElementById('pf-skin-types').selectedOptions).map(o => o.value),
+    tag: document.getElementById('pf-tag').checked ? 'lancamento' : null,
+  };
+  if (idx >= 0) D.products[idx] = p; else D.products.push(p);
+  save(); closeModal(); renderProducts();
+}
+
+function editProduct(i) { openProductModal(i); }
+function deleteProduct(i) { if (confirm('Excluir este produto?')) { D.products.splice(i, 1); save(); renderProducts(); } }
+
+// ═══ VIDEOS ═══
+function renderVideos() {
+  document.getElementById('videos-table').innerHTML = (D.videos || []).map((v, i) => `
+    <tr>
+      <td><strong>${v.title}</strong><br><span style="font-size:.7rem;color:var(--taupe)">${v.desc||''}</span></td>
+      <td>${v.category}</td>
+      <td><a href="${v.url}" target="_blank" style="color:var(--salmon);font-size:.75rem">${(v.url||'').slice(0,35)}...</a></td>
+      <td>
+        <button class="btn btn-sm" onclick="editVideo(${i})"><iconify-icon icon="solar:pen-linear"></iconify-icon></button>
+        <button class="btn btn-sm btn-danger" onclick="deleteVideo(${i})"><iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon></button>
+      </td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--taupe)">Nenhum vídeo cadastrado</td></tr>';
+}
+
+function openVideoModal(idx) {
+  const v = idx !== undefined ? D.videos[idx] : {};
+  document.getElementById('modal-title-text').textContent = idx !== undefined ? 'Editar Vídeo' : 'Novo Vídeo';
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-group"><label>Título</label><input id="vf-title" value="${v.title||''}"/></div>
+    <div class="form-group"><label>Descrição</label><input id="vf-desc" value="${v.desc||''}"/></div>
+    <div class="form-group"><label>URL YouTube</label><input id="vf-url" value="${v.url||''}" placeholder="https://youtube.com/watch?v=..."/></div>
+    <div class="form-group"><label>Categoria</label>
+      <select id="vf-cat">${['Rotina Básica','Proteção Solar','Ativos e Produtos','Problemas Comuns'].map(c=>`<option${v.category===c?' selected':''}>${c}</option>`).join('')}</select>
+    </div>
+    <button class="btn btn-primary" onclick="saveVideo(${idx !== undefined ? idx : -1})">Salvar</button>
+  `;
+  document.getElementById('modal').classList.add('open');
+}
+
+function saveVideo(idx) {
+  const v = {
+    id: idx >= 0 ? D.videos[idx].id : uid(),
+    title: document.getElementById('vf-title').value,
+    desc: document.getElementById('vf-desc').value,
+    url: document.getElementById('vf-url').value,
+    category: document.getElementById('vf-cat').value,
+  };
+  if (idx >= 0) D.videos[idx] = v; else D.videos.push(v);
+  save(); closeModal(); renderVideos();
+}
+
+function editVideo(i) { openVideoModal(i); }
+function deleteVideo(i) { if (confirm('Excluir este vídeo?')) { D.videos.splice(i, 1); save(); renderVideos(); } }
+
+// ═══ TIPS ═══
+function renderTips() {
+  document.getElementById('tips-list').innerHTML = (D.tips || []).map((t, i) => `
+    <div class="tip-item">
+      <span class="tip-text">${t}</span>
+      <div class="tip-actions">
+        ${i > 0 ? `<button class="btn btn-sm" onclick="moveTip(${i},-1)"><iconify-icon icon="solar:arrow-up-linear"></iconify-icon></button>` : ''}
+        ${i < D.tips.length - 1 ? `<button class="btn btn-sm" onclick="moveTip(${i},1)"><iconify-icon icon="solar:arrow-down-linear"></iconify-icon></button>` : ''}
+        <button class="btn btn-sm btn-danger" onclick="deleteTip(${i})"><iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon></button>
+      </div>
+    </div>
+  `).join('') || '<div class="empty"><p>Nenhuma dica cadastrada</p></div>';
+}
+
+function addTip() {
+  const v = document.getElementById('new-tip').value.trim();
+  if (!v) return;
+  if (!D.tips) D.tips = [];
+  D.tips.push(v);
+  document.getElementById('new-tip').value = '';
+  save(); renderTips();
+}
+
+function moveTip(i, dir) {
+  const t = D.tips[i]; D.tips[i] = D.tips[i + dir]; D.tips[i + dir] = t;
+  save(); renderTips();
+}
+
+function deleteTip(i) { D.tips.splice(i, 1); save(); renderTips(); }
+
+// ═══ GUIDE (auto-generated from products) ═══
+function renderGuideTable() {
+  const steps = D.skincare_guide?.steps || ['Demaquilante','Sabonete','Esfoliante','Tônico','Sérum','Antes do Protetor Solar','Tratamento Noturno','Hidratante','Protetor Solar'];
+  const types = getSkinTypes();
+  const products = D.products || [];
+
+  // Build matrix: step → skinType → [products]
+  const matrix = {};
+  steps.forEach(s => {
+    matrix[s] = {};
+    types.forEach(t => { matrix[s][t] = []; });
+  });
+  products.forEach(p => {
+    if (!p.routineStep || !p.forSkinTypes?.length) return;
+    (p.forSkinTypes).forEach(t => {
+      if (matrix[p.routineStep] && matrix[p.routineStep][t] !== undefined)
+        matrix[p.routineStep][t].push(p);
+    });
+  });
+
+  const hasAny = products.some(p => p.routineStep && p.forSkinTypes?.length);
+
+  document.getElementById('guide-table-view').innerHTML = hasAny ? `
+    <div style="font-size:.75rem;color:var(--taupe);margin-bottom:.75rem;display:flex;align-items:center;gap:.4rem">
+      <iconify-icon icon="solar:info-circle-linear"></iconify-icon>
+      Gerado automaticamente dos produtos cadastrados. Para editar, altere o produto.
+    </div>
+    <div class="guide-table"><table>
+      <thead><tr><th>Passo</th>${types.map(t => `<th>${t}</th>`).join('')}</tr></thead>
+      <tbody>${steps.map(s => `
+        <tr>
+          <td><strong style="font-size:.75rem">${s}</strong></td>
+          ${types.map(t => {
+            const ps = matrix[s][t];
+            return `<td>${ps.length ? ps.map(p => `
+              <div style="font-size:.65rem;padding:.2rem .4rem;background:rgba(217,156,148,.1);border-radius:4px;margin-bottom:.2rem;border:1px solid rgba(217,156,148,.2)">
+                <strong>${p.name}</strong><br>
+                <span style="color:var(--taupe)">${p.brand}</span>
+              </div>`).join('') : '<span style="color:var(--taupe);font-style:italic;font-size:.65rem">—</span>'}</td>`;
+          }).join('')}
+        </tr>`).join('')}
+      </tbody>
+    </table></div>` : `
+    <div class="empty">
+      <iconify-icon icon="solar:checklist-linear" width="40"></iconify-icon>
+      <p>Nenhum produto com passo e tipo de pele definidos.</p>
+      <p style="font-size:.75rem;margin-top:.4rem">Cadastre produtos e preencha os campos <strong>Passo da Rotina</strong> e <strong>Para Quais Tipos de Pele</strong>.</p>
+    </div>`;
+}
+
+function showGuideView(view) {
+  // Only table view now — edit is done via products
+  renderGuideTable();
+}
+
+// ═══ ANALYSES ═══
+function renderAnalyses() {
+  document.getElementById('analyses-table').innerHTML = (D.analyses || []).map(a => `
+    <tr>
+      <td>${new Date(a.date).toLocaleString('pt-BR')}</td>
+      <td>${a.skin_type || '—'}</td>
+      <td>${a.fitzpatrick || '—'}</td>
+      <td>${a.findings_count || 0}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--taupe)">Nenhuma análise registrada</td></tr>';
+}
+
+// ═══ SETTINGS ═══
+const DEFAULT_SKIN_TYPES = ['Normal','Seca','Oleosa','Mista','Sensível','Acneica','Madura','Com Melasma'];
+
+function getSkinTypes() {
+  return D.skincare_guide?.skin_types?.length ? D.skincare_guide.skin_types : DEFAULT_SKIN_TYPES;
+}
+
+function renderSettings() {
+  const s = D.settings || {};
+  document.getElementById('set-name').value = s.app_name || 'All Belle';
+  document.getElementById('set-lat').value = s.default_lat || -26.99;
+  document.getElementById('set-lon').value = s.default_lon || -48.63;
+  renderSkinTypesList();
+}
+
+function renderSkinTypesList() {
+  const types = getSkinTypes();
+  document.getElementById('skin-types-list').innerHTML = types.map((t, i) => `
+    <div class="tip-item">
+      <span class="tip-text">${t}</span>
+      <div class="tip-actions">
+        <button class="btn btn-sm btn-danger" onclick="deleteSkinType(${i})" title="Remover"><iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addSkinType() {
+  const v = document.getElementById('new-skin-type').value.trim();
+  if (!v) return;
+  if (!D.skincare_guide) D.skincare_guide = { steps: [], skin_types: DEFAULT_SKIN_TYPES.slice(), data: {} };
+  if (!D.skincare_guide.skin_types) D.skincare_guide.skin_types = DEFAULT_SKIN_TYPES.slice();
+  if (D.skincare_guide.skin_types.includes(v)) { toast('Tipo já existe'); return; }
+  D.skincare_guide.skin_types.push(v);
+  document.getElementById('new-skin-type').value = '';
+  save(); renderSkinTypesList();
+}
+
+function deleteSkinType(i) {
+  const types = getSkinTypes();
+  if (!confirm(`Remover "${types[i]}"? Isso afetará os produtos vinculados.`)) return;
+  if (!D.skincare_guide.skin_types) D.skincare_guide.skin_types = types.slice();
+  D.skincare_guide.skin_types.splice(i, 1);
+  save(); renderSkinTypesList();
+}
+
+function saveSettings() {
+  D.settings = {
+    app_name: document.getElementById('set-name').value,
+    default_lat: parseFloat(document.getElementById('set-lat').value),
+    default_lon: parseFloat(document.getElementById('set-lon').value),
+  };
+  save();
+}
+
+// ═══ MODAL ═══
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ═══ INIT ═══
+init();
+</script>
+</body>
+</html>

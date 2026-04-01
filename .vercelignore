@@ -1,0 +1,9 @@
+Auto Retoucher/
+uploads/
+.venv/
+__pycache__/
+*.pyc
+.env
+.git/
+history.json
+.DS_Store
